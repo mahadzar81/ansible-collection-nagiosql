@@ -1,0 +1,21 @@
+---
+- name: Prepare
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Refresh the apt cache
+      ansible.builtin.apt:
+        update_cache: true
+      changed_when: false
+      when: ansible_facts.os_family == 'Debian'
+
+    - name: Install the packages the container image is missing
+      ansible.builtin.package:
+        name: "{{ __prepare_packages }}"
+        state: present
+      vars:
+        __prepare_packages: >-
+          {{ ['iproute2', 'procps', 'ca-certificates']
+             if ansible_facts.os_family == 'Debian'
+             else ['iproute', 'procps-ng', 'ca-certificates'] }}

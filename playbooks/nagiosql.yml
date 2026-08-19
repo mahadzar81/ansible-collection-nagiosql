@@ -1,0 +1,7 @@
+---
+- name: Provision a Nagios Core and NagiosQL server
+  hosts: nagiosql_servers
+  become: true
+  gather_facts: true
+  roles:
+    - role: mahadzar81.nagiosql.server

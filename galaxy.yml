@@ -1,0 +1,37 @@
+---
+namespace: mahadzar81
+name: nagiosql
+version: 2.0.0
+readme: README.md
+authors:
+  - Mahadzar <mahadzar81@users.noreply.github.com>
+description: >-
+  Install and configure Nagios Core together with the NagiosQL web based
+  configuration front-end on RHEL/Rocky/AlmaLinux 8-10, Debian 11-13 and
+  Ubuntu 22.04/24.04, with optional SELinux support.
+license:
+  - MIT
+tags:
+  - monitoring
+  - nagios
+  - nagiosql
+  - mariadb
+  - apache
+  - selinux
+  - linux
+dependencies:
+  ansible.posix: ">=1.5.0"
+  community.general: ">=8.2.0"
+  ansible.mysql: ">=1.0.0"
+repository: https://github.com/mahadzar81/ansible-collection-nagiosql
+documentation: https://github.com/mahadzar81/ansible-collection-nagiosql/blob/main/README.md
+homepage: https://github.com/mahadzar81/ansible-collection-nagiosql
+issues: https://github.com/mahadzar81/ansible-collection-nagiosql/issues
+build_ignore:
+  - .github
+  - .gitignore
+  - .yamllint
+  - .ansible-lint
+  - "*.tar.gz"
+  - .venv
+  - tests/output

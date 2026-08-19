@@ -1,0 +1,90 @@
+---
+# =============================================================================
+# mahadzar81.nagiosql.common - shared defaults for every role in the collection
+# =============================================================================
+# Values prefixed with `__` are resolved from vars/<os>.yml by this role.
+# Because these are *defaults*, anything you set in inventory, play vars or on
+# the command line will win.
+
+# --- Operating system provided packages --------------------------------------
+nagiosql_apache_packages: "{{ __nagiosql_apache_packages }}"
+nagiosql_php_packages: "{{ __nagiosql_php_packages }}"
+nagiosql_build_packages: "{{ __nagiosql_build_packages }}"
+nagiosql_plugin_build_packages: "{{ __nagiosql_plugin_build_packages }}"
+nagiosql_livestatus_build_packages: "{{ __nagiosql_livestatus_build_packages }}"
+nagiosql_mariadb_packages: "{{ __nagiosql_mariadb_packages }}"
+nagiosql_python_packages: "{{ __nagiosql_python_packages }}"
+nagiosql_selinux_packages: "{{ __nagiosql_selinux_packages }}"
+# Anything extra you want on the box (e.g. `php-ssh2`).
+nagiosql_extra_packages: []
+
+# --- Apache ------------------------------------------------------------------
+nagiosql_apache_service: "{{ __nagiosql_apache_service }}"
+nagiosql_apache_user: "{{ __nagiosql_apache_user }}"
+nagiosql_apache_group: "{{ __nagiosql_apache_group }}"
+nagiosql_apache_conf_dir: "{{ __nagiosql_apache_conf_dir }}"
+nagiosql_apache_document_root: "{{ __nagiosql_apache_document_root }}"
+nagiosql_apache_modules: "{{ __nagiosql_apache_modules }}"
+nagiosql_manage_apache_service: true
+
+# PHP-FPM is how EL 8+ wires PHP into Apache; Debian family uses mod_php.
+nagiosql_php_fpm_service: "{{ __nagiosql_php_fpm_service }}"
+nagiosql_manage_php_fpm: "{{ __nagiosql_php_fpm_service | length > 0 }}"
+
+# --- MariaDB -----------------------------------------------------------------
+nagiosql_mariadb_service: "{{ __nagiosql_mariadb_service }}"
+nagiosql_mariadb_socket: "{{ __nagiosql_mariadb_socket }}"
+nagiosql_mariadb_config_file: "{{ __nagiosql_mariadb_config_file }}"
+
+# --- NagiosQL release ---------------------------------------------------------
+# 3.5.0 is the first release that runs on PHP 8, so it is the default here.
+nagiosql_version: "3.5.0"
+nagiosql_db_version: "{{ nagiosql_version | replace('.', '') }}"
+
+nagiosql_db_name: "db_nagiosql_v{{ nagiosql_db_version }}"
+nagiosql_db_user: nagiosql_user
+# NOTE: override this. Vaulted variables are strongly recommended.
+nagiosql_db_password: "changeme"
+nagiosql_db_host: localhost
+
+nagiosql_mariadb_root_username: root
+# When `nagiosql_mariadb_manage_root_password` is false (the default) the root
+# account keeps its distribution default (unix_socket auth) and Ansible
+# authenticates over the local socket.
+nagiosql_mariadb_manage_root_password: false
+nagiosql_mariadb_root_password: ""
+nagiosql_mariadb_root_home: /root
+
+# --- Nagios Core service ------------------------------------------------------
+nagiosql_core_service: nagios
+
+# --- Layout ------------------------------------------------------------------
+nagiosql_user: nagios
+nagiosql_group: nagios
+nagiosql_command_group: nagcmd
+nagiosql_prefix: /usr/local/nagios
+nagiosql_etc_dir: "{{ nagiosql_prefix }}/etc"
+nagiosql_var_dir: "{{ nagiosql_prefix }}/var"
+# Where NagiosQL writes the object configuration it generates.
+nagiosql_object_dir: /usr/local/nagiosql
+# Scratch space for source tarballs and build trees.
+nagiosql_build_dir: /usr/local/src/nagiosql
+
+# --- Repositories ------------------------------------------------------------
+nagiosql_manage_epel: true
+# CodeReady Builder / PowerTools carries -devel packages needed to build the
+# Nagios plugins on EL.
+nagiosql_manage_crb: true
+nagiosql_crb_repo: "{{ __nagiosql_crb_repo }}"
+
+# --- MK Livestatus (optional) -------------------------------------------------
+nagiosql_livestatus_enabled: false
+nagiosql_livestatus_socket: "{{ nagiosql_var_dir }}/rw/livestatus"
+nagiosql_livestatus_module: "{{ nagiosql_prefix }}/lib/mk-livestatus/livestatus.o"
+
+# --- SELinux -----------------------------------------------------------------
+# Set to false to leave SELinux completely alone.
+nagiosql_selinux_manage: true
+nagiosql_selinux_booleans:
+  - httpd_can_network_connect
+  - httpd_can_network_connect_db

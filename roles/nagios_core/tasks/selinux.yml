@@ -1,0 +1,36 @@
+---
+# SELinux is only ever touched when `ansible_facts.selinux.status == 'enabled'`,
+# which in practice means RHEL, Rocky Linux and AlmaLinux.
+- name: Set the SELinux booleans Nagios needs
+  ansible.posix.seboolean:
+    name: "{{ item }}"
+    state: true
+    persistent: true
+  loop: "{{ nagiosql_selinux_booleans }}"
+
+- name: Define the SELinux file contexts for Nagios Core
+  community.general.sefcontext:
+    target: "{{ item.target }}"
+    setype: "{{ item.setype }}"
+    ftype: "{{ item.ftype | default('a') }}"
+    state: present
+  loop:
+    - target: "{{ nagiosql_prefix }}(/.*)?"
+      setype: httpd_sys_content_t
+    - target: "{{ nagiosql_prefix }}/sbin(/.*)?"
+      setype: httpd_sys_script_exec_t
+    - target: "{{ nagiosql_prefix }}/libexec(/.*)?"
+      setype: httpd_sys_script_exec_t
+    - target: "{{ nagiosql_var_dir }}(/.*)?"
+      setype: httpd_sys_rw_content_t
+    - target: "{{ nagiosql_etc_dir }}(/.*)?"
+      setype: httpd_sys_rw_content_t
+  loop_control:
+    label: "{{ item.target }}"
+  register: nagiosql_core_sefcontext
+
+- name: Relabel the Nagios Core directories
+  ansible.builtin.command:
+    cmd: "restorecon -RFv {{ nagiosql_prefix }}"
+  register: nagiosql_core_restorecon
+  changed_when: nagiosql_core_restorecon.stdout | length > 0

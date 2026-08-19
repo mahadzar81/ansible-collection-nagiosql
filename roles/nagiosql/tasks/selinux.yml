@@ -1,0 +1,23 @@
+---
+- name: Define the SELinux file contexts for NagiosQL
+  community.general.sefcontext:
+    target: "{{ item.target }}"
+    setype: "{{ item.setype }}"
+    ftype: "{{ item.ftype | default('a') }}"
+    state: present
+  loop:
+    - target: "{{ nagiosql_web_dir }}(/.*)?"
+      setype: httpd_sys_rw_content_t
+    - target: "{{ nagiosql_object_dir }}(/.*)?"
+      setype: httpd_sys_rw_content_t
+  loop_control:
+    label: "{{ item.target }}"
+
+- name: Relabel the NagiosQL directories
+  ansible.builtin.command:
+    cmd: "restorecon -RFv {{ item }}"
+  loop:
+    - "{{ nagiosql_web_dir }}"
+    - "{{ nagiosql_object_dir }}"
+  register: nagiosql_restorecon
+  changed_when: nagiosql_restorecon.stdout | length > 0

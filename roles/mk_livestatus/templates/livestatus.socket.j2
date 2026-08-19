@@ -1,0 +1,10 @@
+{{ ansible_managed | comment }}
+[Unit]
+Description=MK Livestatus TCP socket
+
+[Socket]
+ListenStream={{ nagiosql_livestatus_tcp_port }}
+Accept=yes
+
+[Install]
+WantedBy=sockets.target

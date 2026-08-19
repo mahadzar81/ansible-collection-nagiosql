@@ -1,0 +1,12 @@
+{{ ansible_managed | comment }}
+[Unit]
+Description=MK Livestatus TCP connection
+After=nagios.service
+
+[Service]
+User={{ nagiosql_user }}
+Group={{ nagiosql_group }}
+ExecStart={{ nagiosql_prefix }}/bin/unixcat {{ nagiosql_livestatus_socket }}
+StandardInput=socket
+StandardOutput=socket
+StandardError=journal

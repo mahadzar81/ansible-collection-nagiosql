@@ -1,0 +1,8 @@
+---
+nagiosql_plugins_version: "2.4.12"
+nagiosql_plugins_archive: "nagios-plugins-{{ nagiosql_plugins_version }}.tar.gz"
+nagiosql_plugins_url: >-
+  https://nagios-plugins.org/download/nagios-plugins-{{ nagiosql_plugins_version }}.tar.gz
+nagiosql_plugins_checksum: ""
+nagiosql_plugins_src_dir: "{{ nagiosql_build_dir }}/nagios-plugins-{{ nagiosql_plugins_version }}"
+nagiosql_plugins_configure_extra_args: "--with-openssl"

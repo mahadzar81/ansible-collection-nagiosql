@@ -1,0 +1,20 @@
+---
+galaxy_info:
+  role_name: mariadb
+  namespace: mahadzar81
+  author: Mahadzar
+  description: Install MariaDB and provision the NagiosQL database and user.
+  license: MIT
+  min_ansible_version: "2.16"
+  platforms:
+    - name: EL
+      versions: ["8", "9", "10"]
+    - name: Debian
+      versions: ["bullseye", "bookworm", "trixie"]
+    - name: Ubuntu
+      versions: ["jammy", "noble"]
+  galaxy_tags:
+    - mariadb
+    - nagiosql
+dependencies:
+  - role: mahadzar81.nagiosql.common

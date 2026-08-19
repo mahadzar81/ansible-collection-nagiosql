@@ -1,0 +1,29 @@
+-- {{ ansible_managed }}
+SET NAMES utf8mb4;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO';
+
+DROP TABLE IF EXISTS `tbl_user`;
+CREATE TABLE `tbl_user` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `username` varchar(255) NOT NULL,
+  `alias` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `admin_enable` enum('0','1') NOT NULL DEFAULT '0',
+  `wsauth` enum('0','1') NOT NULL DEFAULT '0',
+  `active` enum('0','1') NOT NULL DEFAULT '0',
+  `nodelete` enum('0','1') NOT NULL DEFAULT '0',
+  `language` varchar(20) NOT NULL,
+  `domain` int(10) unsigned NOT NULL DEFAULT 1,
+  `last_login` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+  `last_modified` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
+
+LOCK TABLES `tbl_user` WRITE;
+INSERT INTO `tbl_user` VALUES
+  (1, '{{ nagiosql_admin_user }}', '{{ nagiosql_admin_alias }}', '{{ nagiosql_admin_password_hash }}',
+   '1', '0', '1', '1', '1', 1, '1970-01-01 00:00:00', '1970-01-01 00:00:00');
+UNLOCK TABLES;
+
+SET SQL_MODE=@OLD_SQL_MODE;

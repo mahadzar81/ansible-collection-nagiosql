@@ -1,0 +1,70 @@
+---
+- name: Look for the NagiosQL schema file that ships with the tarball
+  ansible.builtin.find:
+    paths: "{{ nagiosql_web_dir }}/install/sql"
+    patterns: "nagiosQL_v*_db_mysql.sql"
+  register: nagiosql_schema_candidates
+
+- name: Fail when no NagiosQL schema file could be found
+  ansible.builtin.fail:
+    msg: >-
+      No nagiosQL_v*_db_mysql.sql schema file was found under
+      {{ nagiosql_web_dir }}/install/sql. Check that `nagiosql_url` points at a
+      complete NagiosQL release tarball.
+  when: nagiosql_schema_candidates.matched | int == 0
+
+- name: Check whether the NagiosQL schema has already been imported
+  ansible.mysql.mysql_query:
+    login_db: "{{ nagiosql_db_name }}"
+    query: "SHOW TABLES LIKE 'tbl_settings'"
+    login_unix_socket: "{{ nagiosql_mariadb_socket }}"
+    login_user: "{{ nagiosql_mariadb_root_username }}"
+    login_password: "{{ nagiosql_mariadb_root_password if nagiosql_mariadb_manage_root_password else omit }}"
+  register: nagiosql_schema_check
+  changed_when: false
+
+- name: Import the NagiosQL schema and seed data
+  when: nagiosql_schema_check.rowcount[0] | int == 0 or nagiosql_db_force_reinit | bool
+  block:
+    - name: Import the NagiosQL schema
+      ansible.mysql.mysql_db:
+        name: "{{ nagiosql_db_name }}"
+        state: import
+        target: "{{ (nagiosql_schema_candidates.files | sort(attribute='path') | last).path }}"
+        login_unix_socket: "{{ nagiosql_mariadb_socket }}"
+        login_user: "{{ nagiosql_mariadb_root_username }}"
+        login_password: "{{ nagiosql_mariadb_root_password if nagiosql_mariadb_manage_root_password else omit }}"
+
+    - name: Look for the optional Nagios sample import
+      ansible.builtin.stat:
+        path: "{{ nagiosql_web_dir }}/install/sql/import_nagios_sample.sql"
+      register: nagiosql_sample_sql
+
+    - name: Import the Nagios sample data
+      ansible.mysql.mysql_db:
+        name: "{{ nagiosql_db_name }}"
+        state: import
+        target: "{{ nagiosql_web_dir }}/install/sql/import_nagios_sample.sql"
+        login_unix_socket: "{{ nagiosql_mariadb_socket }}"
+        login_user: "{{ nagiosql_mariadb_root_username }}"
+        login_password: "{{ nagiosql_mariadb_root_password if nagiosql_mariadb_manage_root_password else omit }}"
+      when: nagiosql_sample_sql.stat.exists
+
+    - name: Import the NagiosQL settings, user and config-target tables
+      ansible.mysql.mysql_db:
+        name: "{{ nagiosql_db_name }}"
+        state: import
+        target: "{{ nagiosql_web_dir }}/install/sql/{{ item }}.sql"
+        login_unix_socket: "{{ nagiosql_mariadb_socket }}"
+        login_user: "{{ nagiosql_mariadb_root_username }}"
+        login_password: "{{ nagiosql_mariadb_root_password if nagiosql_mariadb_manage_root_password else omit }}"
+      loop:
+        - tbl_settings
+        - tbl_user
+        - tbl_configtarget
+
+- name: Remove the NagiosQL web installer
+  ansible.builtin.file:
+    path: "{{ nagiosql_web_dir }}/install/index.php"
+    state: absent
+  when: not (nagiosql_db_force_reinit | bool)

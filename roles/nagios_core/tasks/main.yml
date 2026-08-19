@@ -1,0 +1,71 @@
+---
+- name: Install the Apache, PHP and build packages
+  ansible.builtin.package:
+    name: "{{ nagiosql_build_packages + nagiosql_apache_packages + nagiosql_php_packages }}"
+    state: present
+  tags:
+    - nagiosql_packages
+
+- name: Create the Nagios command group
+  ansible.builtin.group:
+    name: "{{ nagiosql_command_group }}"
+    state: present
+
+- name: Create the Nagios group
+  ansible.builtin.group:
+    name: "{{ nagiosql_group }}"
+    state: present
+
+- name: Create the Nagios user
+  ansible.builtin.user:
+    name: "{{ nagiosql_user }}"
+    group: "{{ nagiosql_group }}"
+    groups: "{{ nagiosql_command_group }}"
+    append: true
+    shell: /sbin/nologin
+    system: true
+    create_home: false
+    state: present
+
+- name: Add the Apache user to the Nagios command group
+  ansible.builtin.user:
+    name: "{{ nagiosql_apache_user }}"
+    groups: "{{ nagiosql_command_group }}"
+    append: true
+    state: present
+  notify:
+    - Restart apache
+
+- name: Build and install Nagios Core
+  ansible.builtin.include_tasks: install.yml
+
+- name: Configure the Nagios web users
+  community.general.htpasswd:
+    path: "{{ nagiosql_htpasswd_file }}"
+    name: "{{ item.username }}"
+    password: "{{ item.password }}"
+    crypt_scheme: "{{ nagiosql_htpasswd_crypt_scheme }}"
+    owner: root
+    group: "{{ nagiosql_apache_group }}"
+    mode: "0640"
+    state: present
+  loop: "{{ nagiosql_web_users }}"
+  loop_control:
+    label: "{{ item.username }}"
+  no_log: true
+
+- name: Configure Apache
+  ansible.builtin.include_tasks: apache.yml
+
+- name: Apply the SELinux policy for Nagios Core
+  ansible.builtin.include_tasks: selinux.yml
+  when: nagiosql_selinux_active | bool
+  tags:
+    - nagiosql_selinux
+
+- name: Ensure Nagios Core is running and enabled
+  ansible.builtin.systemd_service:
+    name: "{{ nagiosql_core_service }}"
+    state: "{{ nagiosql_core_service_state }}"
+    enabled: "{{ nagiosql_core_service_enabled }}"
+    daemon_reload: true

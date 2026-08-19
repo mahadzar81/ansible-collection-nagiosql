@@ -1,0 +1,39 @@
+---
+- name: Create the NagiosQL web directory
+  ansible.builtin.file:
+    path: "{{ nagiosql_web_dir }}"
+    state: directory
+    owner: "{{ nagiosql_apache_user }}"
+    group: "{{ nagiosql_apache_group }}"
+    mode: "0755"
+
+- name: Download the NagiosQL source archive
+  ansible.builtin.get_url:
+    url: "{{ nagiosql_url }}"
+    dest: "{{ nagiosql_build_dir }}/{{ nagiosql_archive }}"
+    checksum: "{{ ('sha256:' + nagiosql_checksum) if nagiosql_checksum else omit }}"
+    owner: root
+    group: root
+    mode: "0644"
+    timeout: 60
+
+- name: Unpack NagiosQL into the web directory
+  ansible.builtin.unarchive:
+    src: "{{ nagiosql_build_dir }}/{{ nagiosql_archive }}"
+    dest: "{{ nagiosql_web_dir }}"
+    remote_src: true
+    creates: "{{ nagiosql_web_dir }}/index.php"
+    extra_opts:
+      - --strip-components=1
+    owner: "{{ nagiosql_apache_user }}"
+    group: "{{ nagiosql_apache_group }}"
+  notify:
+    - Restart apache
+
+- name: Set the ownership of the NagiosQL web directory
+  ansible.builtin.file:
+    path: "{{ nagiosql_web_dir }}"
+    state: directory
+    recurse: true
+    owner: "{{ nagiosql_apache_user }}"
+    group: "{{ nagiosql_apache_group }}"

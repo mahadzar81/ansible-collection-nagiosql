@@ -1,0 +1,83 @@
+---
+- name: Install the plugin build dependencies
+  ansible.builtin.package:
+    name: "{{ nagiosql_build_packages + nagiosql_plugin_build_packages }}"
+    state: present
+  tags:
+    - nagiosql_packages
+
+- name: Check whether the Nagios plugins are already installed at version {{ nagiosql_plugins_version }}
+  ansible.builtin.stat:
+    path: "{{ nagiosql_prefix }}/.ansible-nagios-plugins-{{ nagiosql_plugins_version }}"
+  register: nagiosql_plugins_stamp
+
+- name: Build the Nagios plugins from source at version {{ nagiosql_plugins_version }}
+  when: not nagiosql_plugins_stamp.stat.exists
+  block:
+    - name: Download the Nagios plugins source archive
+      ansible.builtin.get_url:
+        url: "{{ nagiosql_plugins_url }}"
+        dest: "{{ nagiosql_build_dir }}/{{ nagiosql_plugins_archive }}"
+        checksum: "{{ ('sha256:' + nagiosql_plugins_checksum) if nagiosql_plugins_checksum else omit }}"
+        owner: root
+        group: root
+        mode: "0644"
+        timeout: 60
+
+    - name: Unpack the Nagios plugins source archive
+      ansible.builtin.unarchive:
+        src: "{{ nagiosql_build_dir }}/{{ nagiosql_plugins_archive }}"
+        dest: "{{ nagiosql_build_dir }}"
+        remote_src: true
+        creates: "{{ nagiosql_plugins_src_dir }}/configure"
+        owner: root
+        group: root
+
+    - name: Run configure for the Nagios plugins
+      ansible.builtin.command:
+        cmd: >-
+          ./configure
+          --prefix={{ nagiosql_prefix }}
+          --with-nagios-user={{ nagiosql_user }}
+          --with-nagios-group={{ nagiosql_group }}
+          {{ nagiosql_plugins_configure_extra_args }}
+        chdir: "{{ nagiosql_plugins_src_dir }}"
+        creates: "{{ nagiosql_plugins_src_dir }}/Makefile"
+
+    - name: Compile the Nagios plugins
+      ansible.builtin.command:
+        cmd: make
+        chdir: "{{ nagiosql_plugins_src_dir }}"
+        creates: "{{ nagiosql_plugins_src_dir }}/plugins/check_ping"
+
+    - name: Install the Nagios plugins
+      ansible.builtin.command:
+        cmd: make install
+        chdir: "{{ nagiosql_plugins_src_dir }}"
+      changed_when: true
+
+    - name: Record the installed Nagios plugins version {{ nagiosql_plugins_version }}
+      ansible.builtin.file:
+        path: "{{ nagiosql_prefix }}/.ansible-nagios-plugins-{{ nagiosql_plugins_version }}"
+        state: touch
+        owner: root
+        group: root
+        mode: "0644"
+        modification_time: preserve
+        access_time: preserve
+
+- name: Find the stamp files belonging to older plugin builds
+  ansible.builtin.find:
+    paths: "{{ nagiosql_prefix }}"
+    patterns: ".ansible-nagios-plugins-*"
+    hidden: true
+    excludes: ".ansible-nagios-plugins-{{ nagiosql_plugins_version }}"
+  register: nagiosql_plugins_old_stamps
+
+- name: Remove the stamp files belonging to older plugin builds
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ nagiosql_plugins_old_stamps.files }}"
+  loop_control:
+    label: "{{ item.path }}"

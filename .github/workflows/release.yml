@@ -1,0 +1,68 @@
+---
+# Publishing requires a `GALAXY_API_KEY` secret on the repository. Create the
+# token at https://galaxy.ansible.com/ui/token/ and store it under
+# Settings -> Secrets and variables -> Actions.
+name: Release
+
+'on':
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  COLLECTION_PATH: ansible_collections/mahadzar81/nagiosql
+  ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}
+
+jobs:
+
+  release:
+    name: Create the GitHub release and publish to Galaxy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the collection
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.COLLECTION_PATH }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ansible-core
+        run: python -m pip install --upgrade pip ansible-core pyyaml
+
+      - name: Check that galaxy.yml matches the pushed tag
+        working-directory: ${{ env.COLLECTION_PATH }}
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          GALAXY_VERSION="$(python -c "import yaml,sys; print(yaml.safe_load(open('galaxy.yml'))['version'])")"
+          echo "tag=${TAG_VERSION} galaxy.yml=${GALAXY_VERSION}"
+          if [ "${TAG_VERSION}" != "${GALAXY_VERSION}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match version ${GALAXY_VERSION} in galaxy.yml"
+            exit 1
+          fi
+
+      - name: Build the collection
+        working-directory: ${{ env.COLLECTION_PATH }}
+        run: ansible-galaxy collection build --output-path ./dist
+
+      - name: Create the GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: ${{ env.COLLECTION_PATH }}/dist/*.tar.gz
+
+      - name: Publish the collection to Ansible Galaxy
+        working-directory: ${{ env.COLLECTION_PATH }}
+        run: |
+          set -euo pipefail
+          ansible-galaxy collection publish \
+            --api-key "${{ secrets.GALAXY_API_KEY }}" \
+            ./dist/*.tar.gz

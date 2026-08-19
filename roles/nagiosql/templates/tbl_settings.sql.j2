@@ -1,0 +1,39 @@
+-- {{ ansible_managed }}
+SET NAMES utf8mb4;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO';
+
+DROP TABLE IF EXISTS `tbl_settings`;
+CREATE TABLE `tbl_settings` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `category` varchar(20) NOT NULL,
+  `name` varchar(30) NOT NULL,
+  `value` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=MyISAM AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4;
+
+LOCK TABLES `tbl_settings` WRITE;
+INSERT INTO `tbl_settings` VALUES
+  (1, 'db', 'version', '{{ nagiosql_version }}'),
+  (2, 'db', 'type', 'mysqli'),
+  (3, 'path', 'protocol', 'http'),
+  (4, 'path', 'tempdir', '/tmp'),
+  (5, 'path', 'base_url', '{{ nagiosql_web_base_url }}'),
+  (6, 'path', 'base_path', '{{ nagiosql_web_dir }}/'),
+  (7, 'data', 'locale', '{{ nagiosql_admin_language }}'),
+  (8, 'data', 'encoding', 'utf-8'),
+  (9, 'security', 'logofftime', '3600'),
+  (10, 'security', 'wsauth', '0'),
+  (11, 'common', 'pagelines', '15'),
+  (12, 'common', 'seldisable', '1'),
+  (13, 'common', 'tplcheck', '0'),
+  (14, 'common', 'updcheck', '0'),
+  (15, 'network', 'proxy', '0'),
+  (16, 'network', 'proxyserver', ''),
+  (17, 'network', 'proxyuser', ''),
+  (18, 'network', 'proxypasswd', ''),
+  (19, 'network', 'onlineupdate', '0'),
+  (20, 'performance', 'parents', '1');
+UNLOCK TABLES;
+
+SET SQL_MODE=@OLD_SQL_MODE;

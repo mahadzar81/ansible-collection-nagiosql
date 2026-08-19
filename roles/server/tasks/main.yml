@@ -1,0 +1,25 @@
+---
+- name: Install MariaDB and provision the NagiosQL database
+  ansible.builtin.include_role:
+    name: mahadzar81.nagiosql.mariadb
+  when: nagiosql_server_install_mariadb | bool
+
+- name: Install Nagios Core
+  ansible.builtin.include_role:
+    name: mahadzar81.nagiosql.nagios_core
+  when: nagiosql_server_install_nagios_core | bool
+
+- name: Install the Nagios plugins
+  ansible.builtin.include_role:
+    name: mahadzar81.nagiosql.nagios_plugins
+  when: nagiosql_server_install_nagios_plugins | bool
+
+- name: Install MK Livestatus
+  ansible.builtin.include_role:
+    name: mahadzar81.nagiosql.mk_livestatus
+  when: nagiosql_livestatus_enabled | bool
+
+- name: Install the NagiosQL web front-end
+  ansible.builtin.include_role:
+    name: mahadzar81.nagiosql.nagiosql
+  when: nagiosql_server_install_nagiosql | bool

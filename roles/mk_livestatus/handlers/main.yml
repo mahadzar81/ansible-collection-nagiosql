@@ -1,0 +1,6 @@
+---
+- name: Restart livestatus socket
+  ansible.builtin.systemd_service:
+    name: livestatus.socket
+    state: restarted
+    daemon_reload: true

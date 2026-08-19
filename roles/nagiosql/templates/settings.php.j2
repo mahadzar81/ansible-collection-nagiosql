@@ -1,0 +1,19 @@
+<?php
+exit;
+?>
+;///////////////////////////////////////////////////////////////////////////////
+;
+; NagiosQL - database configuration
+; {{ ansible_managed }}
+;
+;///////////////////////////////////////////////////////////////////////////////
+[db]
+type         = 'mysqli'
+server       = '{{ nagiosql_db_host }}'
+port         = '3306'
+database     = '{{ nagiosql_db_name }}'
+username     = '{{ nagiosql_db_user }}'
+password     = '{{ nagiosql_db_password }}'
+[path]
+base_url     = '{{ nagiosql_web_base_url }}'
+base_path    = '{{ nagiosql_web_dir }}/'

@@ -1,0 +1,26 @@
+---
+# --- Source -------------------------------------------------------------------
+nagiosql_core_version: "4.5.14"
+nagiosql_core_archive: "nagios-{{ nagiosql_core_version }}.tar.gz"
+nagiosql_core_url: >-
+  https://assets.nagios.com/downloads/nagioscore/releases/nagios-{{ nagiosql_core_version }}.tar.gz
+# Set to a sha256 digest to have Ansible verify the download.
+nagiosql_core_checksum: ""
+nagiosql_core_src_dir: "{{ nagiosql_build_dir }}/nagios-{{ nagiosql_core_version }}"
+
+# Extra flags appended to ./configure.
+nagiosql_core_configure_extra_args: ""
+
+# --- Service ------------------------------------------------------------------
+# `nagiosql_core_service` lives in the `common` role so the handlers in the
+# `nagiosql` role can restart the same unit.
+nagiosql_core_service_state: started
+nagiosql_core_service_enabled: true
+
+# --- Web interface ------------------------------------------------------------
+# Users allowed into the Nagios CGIs. Override and vault these.
+nagiosql_web_users:
+  - username: nagiosadmin
+    password: "changeme"
+nagiosql_htpasswd_file: "{{ nagiosql_etc_dir }}/htpasswd.users"
+nagiosql_htpasswd_crypt_scheme: apr_md5_crypt

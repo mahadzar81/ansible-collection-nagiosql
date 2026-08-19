@@ -1,0 +1,69 @@
+---
+# Fallback for undetected distributions - assumes a Debian-like layout.
+__nagiosql_apache_service: apache2
+__nagiosql_apache_user: www-data
+__nagiosql_apache_group: www-data
+__nagiosql_apache_conf_dir: /etc/apache2/conf-enabled
+__nagiosql_apache_document_root: /var/www/html
+__nagiosql_apache_modules:
+  - cgi
+  - rewrite
+# Debian and Ubuntu keep mod_php, so there is no separate FPM unit to manage.
+__nagiosql_php_fpm_service: ""
+
+__nagiosql_apache_packages:
+  - apache2
+  - libapache2-mod-php
+
+__nagiosql_php_packages:
+  - php
+  - php-cli
+  - php-common
+  - php-gd
+  - php-mbstring
+  - php-mysql
+  - php-xml
+
+__nagiosql_build_packages:
+  - autoconf
+  - automake
+  - build-essential
+  - gettext
+  - libgd-dev
+  - libssl-dev
+  - libtool
+  - tar
+  - unzip
+  - wget
+
+__nagiosql_plugin_build_packages:
+  - dnsutils
+  - fping
+  - gawk
+  - iputils-ping
+  - libldap2-dev
+  - libpq-dev
+  - libssl-dev
+  - smbclient
+  - snmp
+
+__nagiosql_livestatus_build_packages:
+  - libboost-dev
+  - libboost-system-dev
+  - librrd-dev
+  - rrdtool
+
+__nagiosql_mariadb_packages:
+  - mariadb-server
+__nagiosql_mariadb_service: mariadb
+__nagiosql_mariadb_socket: /run/mysqld/mysqld.sock
+__nagiosql_mariadb_config_file: /etc/mysql/my.cnf
+
+__nagiosql_python_packages:
+  - python3-passlib
+  - python3-pymysql
+
+__nagiosql_selinux_packages: []
+
+# Not applicable on the Debian family, but the variable must resolve.
+__nagiosql_crb_repo: ""

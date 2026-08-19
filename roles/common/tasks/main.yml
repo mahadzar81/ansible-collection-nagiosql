@@ -1,0 +1,79 @@
+---
+- name: Load the variables for this operating system
+  ansible.builtin.include_vars: "{{ lookup('ansible.builtin.first_found', __nagiosql_vars_params) }}"
+  vars:
+    __nagiosql_vars_params:
+      files:
+        - "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml"
+        - "{{ ansible_facts.distribution }}.yml"
+        - "{{ ansible_facts.os_family }}-{{ ansible_facts.distribution_major_version }}.yml"
+        - "{{ ansible_facts.os_family }}.yml"
+        - default.yml
+      paths:
+        - "{{ role_path }}/vars"
+  tags:
+    - always
+
+- name: Verify that this platform is supported
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.os_family in ['RedHat', 'Debian']
+      - >-
+        (ansible_facts.os_family == 'RedHat' and
+         ansible_facts.distribution_major_version | int >= 8)
+        or
+        (ansible_facts.distribution == 'Debian' and
+         ansible_facts.distribution_major_version | int >= 11)
+        or
+        (ansible_facts.distribution == 'Ubuntu' and
+         ansible_facts.distribution_version is version('22.04', '>='))
+        or
+        (ansible_facts.os_family == 'Debian' and
+         ansible_facts.distribution not in ['Debian', 'Ubuntu'])
+    fail_msg: >-
+      {{ ansible_facts.distribution }} {{ ansible_facts.distribution_version }}
+      is not supported. This collection supports RHEL/Rocky/AlmaLinux 8, 9 and 10,
+      Debian 11, 12 and 13, and Ubuntu 22.04 and 24.04.
+    success_msg: "{{ ansible_facts.distribution }} {{ ansible_facts.distribution_version }} is supported."
+  tags:
+    - always
+
+- name: Record whether SELinux is active on this host
+  ansible.builtin.set_fact:
+    nagiosql_selinux_active: >-
+      {{ nagiosql_selinux_manage
+         and ansible_facts.selinux is mapping
+         and (ansible_facts.selinux.status | default('disabled')) == 'enabled' }}
+  tags:
+    - always
+
+- name: Configure package repositories
+  ansible.builtin.include_tasks: repositories.yml
+  tags:
+    - nagiosql_packages
+
+- name: Install the packages Ansible itself needs on the managed host
+  ansible.builtin.package:
+    name: "{{ nagiosql_python_packages + nagiosql_extra_packages }}"
+    state: present
+  tags:
+    - nagiosql_packages
+
+- name: Install the SELinux management tooling
+  ansible.builtin.package:
+    name: "{{ nagiosql_selinux_packages }}"
+    state: present
+  when:
+    - nagiosql_selinux_active | bool
+    - nagiosql_selinux_packages | length > 0
+  tags:
+    - nagiosql_packages
+    - nagiosql_selinux
+
+- name: Create the build directory
+  ansible.builtin.file:
+    path: "{{ nagiosql_build_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"

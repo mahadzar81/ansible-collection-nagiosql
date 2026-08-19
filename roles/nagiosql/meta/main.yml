@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  role_name: nagiosql
+  namespace: mahadzar81
+  author: Mahadzar
+  description: Install the NagiosQL web configuration front-end for Nagios Core.
+  license: MIT
+  min_ansible_version: "2.16"
+  platforms:
+    - name: EL
+      versions: ["8", "9", "10"]
+    - name: Debian
+      versions: ["bullseye", "bookworm", "trixie"]
+    - name: Ubuntu
+      versions: ["jammy", "noble"]
+  galaxy_tags:
+    - nagios
+    - nagiosql
+    - monitoring
+dependencies:
+  - role: mahadzar81.nagiosql.common

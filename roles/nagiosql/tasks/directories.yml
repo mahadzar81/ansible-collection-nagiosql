@@ -1,0 +1,64 @@
+---
+- name: Create the NagiosQL configuration directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ nagiosql_apache_user }}"
+    group: "{{ nagiosql_apache_group }}"
+    mode: "0775"
+  loop:
+    - "{{ nagiosql_object_dir }}"
+    - "{{ nagiosql_object_dir }}/hosts"
+    - "{{ nagiosql_object_dir }}/services"
+    - "{{ nagiosql_object_dir }}/backup"
+    - "{{ nagiosql_object_dir }}/backup/hosts"
+    - "{{ nagiosql_object_dir }}/backup/services"
+    - "{{ nagiosql_object_dir }}/var"
+
+- name: Seed the NagiosQL object directory from the Nagios Core sample objects
+  ansible.builtin.copy:
+    src: "{{ nagiosql_etc_dir }}/objects"
+    dest: "{{ nagiosql_object_dir }}/etc/"
+    remote_src: true
+    force: false
+    owner: "{{ nagiosql_apache_user }}"
+    group: "{{ nagiosql_apache_group }}"
+    mode: "0664"
+    directory_mode: "0775"
+
+- name: Create an empty hostgroups.cfg for NagiosQL to write into
+  ansible.builtin.copy:
+    content: "# Managed by NagiosQL\n"
+    dest: "{{ nagiosql_object_dir }}/hostgroups.cfg"
+    force: false
+    owner: "{{ nagiosql_apache_user }}"
+    group: "{{ nagiosql_apache_group }}"
+    mode: "0664"
+
+- name: Let the Apache group read and write the Nagios Core configuration
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ nagiosql_user }}"
+    group: "{{ nagiosql_apache_group }}"
+    mode: "0775"
+  loop:
+    - "{{ nagiosql_prefix }}"
+    - "{{ nagiosql_etc_dir }}"
+
+- name: Let the Apache group read and write the CGI and resource configuration
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: "{{ nagiosql_user }}"
+    group: "{{ nagiosql_apache_group }}"
+    mode: "0664"
+  loop:
+    - "{{ nagiosql_etc_dir }}/cgi.cfg"
+    - "{{ nagiosql_etc_dir }}/resource.cfg"
+
+- name: Let the Apache group execute the Nagios binary
+  ansible.builtin.file:
+    path: "{{ nagiosql_prefix }}/bin/nagios"
+    owner: "{{ nagiosql_user }}"
+    group: "{{ nagiosql_apache_group }}"
+    mode: "0750"

@@ -1,0 +1,83 @@
+---
+- name: Install the MK Livestatus build dependencies
+  ansible.builtin.package:
+    name: "{{ nagiosql_build_packages + nagiosql_livestatus_build_packages }}"
+    state: present
+  tags:
+    - nagiosql_packages
+
+- name: Check whether MK Livestatus is already installed at version {{ nagiosql_livestatus_version }}
+  ansible.builtin.stat:
+    path: "{{ nagiosql_prefix }}/.ansible-mk-livestatus-{{ nagiosql_livestatus_version }}"
+  register: nagiosql_livestatus_stamp
+
+- name: Build MK Livestatus from source at version {{ nagiosql_livestatus_version }}
+  when: not nagiosql_livestatus_stamp.stat.exists
+  block:
+    - name: Download the MK Livestatus source archive
+      ansible.builtin.get_url:
+        url: "{{ nagiosql_livestatus_url }}"
+        dest: "{{ nagiosql_build_dir }}/{{ nagiosql_livestatus_archive }}"
+        checksum: "{{ ('sha256:' + nagiosql_livestatus_checksum) if nagiosql_livestatus_checksum else omit }}"
+        owner: root
+        group: root
+        mode: "0644"
+        timeout: 60
+
+    - name: Unpack the MK Livestatus source archive
+      ansible.builtin.unarchive:
+        src: "{{ nagiosql_build_dir }}/{{ nagiosql_livestatus_archive }}"
+        dest: "{{ nagiosql_build_dir }}"
+        remote_src: true
+        creates: "{{ nagiosql_livestatus_src_dir }}/configure"
+        owner: root
+        group: root
+
+    - name: Run configure for MK Livestatus
+      ansible.builtin.command:
+        cmd: "./configure --with-nagios4 --prefix={{ nagiosql_prefix }}"
+        chdir: "{{ nagiosql_livestatus_src_dir }}"
+        creates: "{{ nagiosql_livestatus_src_dir }}/Makefile"
+      environment:
+        CXXFLAGS: "{{ nagiosql_livestatus_cxxflags }}"
+
+    - name: Compile and install MK Livestatus
+      ansible.builtin.command:
+        cmd: make install
+        chdir: "{{ nagiosql_livestatus_src_dir }}"
+        creates: "{{ nagiosql_livestatus_module }}"
+      environment:
+        CXXFLAGS: "{{ nagiosql_livestatus_cxxflags }}"
+
+    - name: Record the installed MK Livestatus version {{ nagiosql_livestatus_version }}
+      ansible.builtin.file:
+        path: "{{ nagiosql_prefix }}/.ansible-mk-livestatus-{{ nagiosql_livestatus_version }}"
+        state: touch
+        owner: root
+        group: root
+        mode: "0644"
+        modification_time: preserve
+        access_time: preserve
+
+- name: Configure Livestatus TCP access
+  when: nagiosql_livestatus_tcp_enabled | bool
+  block:
+    - name: Install the Livestatus systemd units
+      ansible.builtin.template:
+        src: "{{ item }}.j2"
+        dest: "/etc/systemd/system/{{ item }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - livestatus.socket
+        - "livestatus@.service"
+      notify:
+        - Restart livestatus socket
+
+    - name: Ensure the Livestatus socket is enabled
+      ansible.builtin.systemd_service:
+        name: livestatus.socket
+        state: started
+        enabled: true
+        daemon_reload: true

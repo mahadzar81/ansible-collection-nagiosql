@@ -1,0 +1,25 @@
+---
+- name: Refresh the apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  changed_when: false
+  when: ansible_facts.os_family == 'Debian'
+
+- name: Install the EPEL release package
+  ansible.builtin.dnf:
+    name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_facts.distribution_major_version }}.noarch.rpm"
+    state: present
+    disable_gpg_check: true
+  when:
+    - ansible_facts.os_family == 'RedHat'
+    - nagiosql_manage_epel | bool
+
+- name: Enable the CodeReady Builder repository
+  community.general.dnf_config_manager:
+    name: "{{ nagiosql_crb_repo }}"
+    state: enabled
+  when:
+    - ansible_facts.os_family == 'RedHat'
+    - nagiosql_manage_crb | bool
+    - nagiosql_crb_repo | length > 0

@@ -1,0 +1,25 @@
+---
+- name: Enable the required Apache modules
+  community.general.apache2_module:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ nagiosql_apache_modules }}"
+  when: ansible_facts.os_family == 'Debian'
+  notify:
+    - Restart apache
+
+- name: Ensure php-fpm is running and enabled
+  ansible.builtin.systemd_service:
+    name: "{{ nagiosql_php_fpm_service }}"
+    state: started
+    enabled: true
+  when:
+    - nagiosql_manage_php_fpm | bool
+    - nagiosql_php_fpm_service | length > 0
+
+- name: Ensure Apache is running and enabled
+  ansible.builtin.systemd_service:
+    name: "{{ nagiosql_apache_service }}"
+    state: started
+    enabled: true
+  when: nagiosql_manage_apache_service | bool

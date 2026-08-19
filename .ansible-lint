@@ -1,0 +1,14 @@
+---
+profile: production
+
+exclude_paths:
+  - .github/
+  - .venv/
+  - extensions/molecule/*/molecule.yml
+
+skip_list:
+  # Collection-wide `nagiosql_` prefix is used instead of a per-role prefix.
+  - var-naming[no-role-prefix]
+
+warn_list:
+  - experimental

@@ -1,0 +1,73 @@
+---
+__nagiosql_apache_service: httpd
+__nagiosql_apache_user: apache
+__nagiosql_apache_group: apache
+__nagiosql_apache_conf_dir: /etc/httpd/conf.d
+__nagiosql_apache_document_root: /var/www/html
+__nagiosql_apache_modules: []
+__nagiosql_php_fpm_service: php-fpm
+
+__nagiosql_apache_packages:
+  - httpd
+  - mod_ssl
+
+__nagiosql_php_packages:
+  - php
+  - php-cli
+  - php-fpm
+  - php-common
+  - php-gd
+  - php-mbstring
+  - php-mysqlnd
+  - php-xml
+
+__nagiosql_build_packages:
+  - gcc
+  - gcc-c++
+  - make
+  - autoconf
+  - automake
+  - gettext
+  - gd-devel
+  - glibc
+  - glibc-common
+  - libtool
+  - openssl-devel
+  - perl
+  - tar
+  - unzip
+  - wget
+
+__nagiosql_plugin_build_packages:
+  - fping
+  - bind-utils
+  - iputils
+  - libpq-devel
+  - net-snmp-utils
+  - openldap-devel
+  - openssl-devel
+  - samba-client
+
+__nagiosql_livestatus_build_packages:
+  - boost-devel
+  - rrdtool
+  - rrdtool-devel
+
+__nagiosql_mariadb_packages:
+  - mariadb-server
+__nagiosql_mariadb_service: mariadb
+__nagiosql_mariadb_socket: /var/lib/mysql/mysql.sock
+__nagiosql_mariadb_config_file: /etc/my.cnf
+
+__nagiosql_python_packages:
+  - python3-passlib
+  - python3-PyMySQL
+
+__nagiosql_selinux_packages:
+  - libselinux-utils
+  - policycoreutils
+  - policycoreutils-python-utils
+  - python3-libselinux
+  - python3-policycoreutils
+
+__nagiosql_crb_repo: crb

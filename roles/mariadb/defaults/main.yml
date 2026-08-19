@@ -1,0 +1,7 @@
+---
+# MariaDB tuning knobs. Connection/credential defaults live in the `common`
+# role because the `nagiosql` role needs them too.
+nagiosql_mariadb_state: started
+nagiosql_mariadb_enabled: true
+nagiosql_db_encoding: utf8mb4
+nagiosql_db_collation: utf8mb4_general_ci

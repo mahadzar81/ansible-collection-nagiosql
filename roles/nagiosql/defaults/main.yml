@@ -1,0 +1,52 @@
+---
+# --- Source -------------------------------------------------------------------
+# `nagiosql_version` and `nagiosql_db_version` live in the `common` role because
+# the database name is derived from them.
+nagiosql_archive: "nagiosql-{{ nagiosql_version }}.tar.gz"
+nagiosql_url: >-
+  https://sourceforge.net/projects/nagiosql/files/nagiosql/NagiosQL%203.5.0%20%28BETA%20release%29/nagiosql-3.5.0-git2023-03-03-beta.tar.gz
+nagiosql_checksum: ""
+
+# --- Web front-end ------------------------------------------------------------
+nagiosql_web_dir: "{{ nagiosql_apache_document_root }}/webadmin"
+nagiosql_web_base_url: "/webadmin/"
+
+# NagiosQL administrator. NagiosQL 3.4/3.5 store an MD5 digest of the password;
+# supply `nagiosql_admin_password_hash` directly if your release differs.
+nagiosql_admin_user: admin
+nagiosql_admin_alias: Administrator
+nagiosql_admin_password: "changeme"
+nagiosql_admin_password_hash: "{{ nagiosql_admin_password | hash('md5') }}"
+nagiosql_admin_language: en_GB
+
+# --- Generated nagios.cfg -----------------------------------------------------
+# Set to false to leave the Nagios Core main configuration file untouched.
+nagiosql_manage_nagios_cfg: true
+nagiosql_validate_nagios_cfg: true
+
+nagiosql_cfg_files:
+  - "{{ nagiosql_object_dir }}/etc/objects/commands.cfg"
+  - "{{ nagiosql_object_dir }}/etc/objects/contacts.cfg"
+  - "{{ nagiosql_object_dir }}/etc/objects/timeperiods.cfg"
+  - "{{ nagiosql_object_dir }}/etc/objects/templates.cfg"
+  - "{{ nagiosql_object_dir }}/etc/objects/localhost.cfg"
+  - "{{ nagiosql_object_dir }}/hostgroups.cfg"
+
+nagiosql_cfg_dirs:
+  - "{{ nagiosql_object_dir }}/hosts"
+  - "{{ nagiosql_object_dir }}/services"
+
+# Event broker modules. Livestatus is wired in automatically when enabled.
+nagiosql_broker_modules: >-
+  {{ [nagiosql_livestatus_module ~ ' ' ~ nagiosql_livestatus_socket]
+     if nagiosql_livestatus_enabled else [] }}
+
+nagiosql_admin_email: "nagios@localhost"
+nagiosql_admin_pager: "pagenagios@localhost"
+nagiosql_date_format: iso8601
+nagiosql_process_performance_data: false
+
+# --- Database bootstrap -------------------------------------------------------
+# Re-import the NagiosQL schema even if the tables already exist. This DROPs the
+# settings, user and config-target tables, so it is off by default.
+nagiosql_db_force_reinit: false

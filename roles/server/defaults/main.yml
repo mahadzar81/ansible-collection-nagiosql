@@ -1,0 +1,7 @@
+---
+# Toggle the individual layers of the stack. Turn one off if it is already
+# managed elsewhere in your inventory (for example an external MariaDB).
+nagiosql_server_install_mariadb: true
+nagiosql_server_install_nagios_core: true
+nagiosql_server_install_nagios_plugins: true
+nagiosql_server_install_nagiosql: true

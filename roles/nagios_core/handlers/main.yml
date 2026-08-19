@@ -1,0 +1,12 @@
+---
+- name: Restart apache
+  ansible.builtin.systemd_service:
+    name: "{{ nagiosql_apache_service }}"
+    state: restarted
+  when: nagiosql_manage_apache_service | bool
+
+- name: Restart nagios
+  ansible.builtin.systemd_service:
+    name: "{{ nagiosql_core_service }}"
+    state: restarted
+    daemon_reload: true

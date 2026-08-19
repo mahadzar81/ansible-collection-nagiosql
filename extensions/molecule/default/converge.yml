@@ -1,0 +1,9 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Install the full NagiosQL server stack
+      ansible.builtin.include_role:
+        name: mahadzar81.nagiosql.server

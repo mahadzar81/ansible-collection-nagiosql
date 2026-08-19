@@ -1,0 +1,88 @@
+---
+- name: Check whether Nagios Core is already installed at version {{ nagiosql_core_version }}
+  ansible.builtin.stat:
+    path: "{{ nagiosql_prefix }}/.ansible-nagios-core-{{ nagiosql_core_version }}"
+  register: nagiosql_core_stamp
+
+- name: Build Nagios Core from source at version {{ nagiosql_core_version }}
+  when: not nagiosql_core_stamp.stat.exists
+  block:
+    - name: Download the Nagios Core source archive
+      ansible.builtin.get_url:
+        url: "{{ nagiosql_core_url }}"
+        dest: "{{ nagiosql_build_dir }}/{{ nagiosql_core_archive }}"
+        checksum: "{{ ('sha256:' + nagiosql_core_checksum) if nagiosql_core_checksum else omit }}"
+        owner: root
+        group: root
+        mode: "0644"
+        timeout: 60
+
+    - name: Unpack the Nagios Core source archive
+      ansible.builtin.unarchive:
+        src: "{{ nagiosql_build_dir }}/{{ nagiosql_core_archive }}"
+        dest: "{{ nagiosql_build_dir }}"
+        remote_src: true
+        creates: "{{ nagiosql_core_src_dir }}/configure"
+        owner: root
+        group: root
+
+    - name: Run configure for Nagios Core
+      ansible.builtin.command:
+        cmd: >-
+          ./configure
+          --with-nagios-user={{ nagiosql_user }}
+          --with-nagios-group={{ nagiosql_group }}
+          --with-command-group={{ nagiosql_command_group }}
+          --with-httpd-conf={{ nagiosql_apache_conf_dir }}
+          --prefix={{ nagiosql_prefix }}
+          {{ nagiosql_core_configure_extra_args }}
+        chdir: "{{ nagiosql_core_src_dir }}"
+        creates: "{{ nagiosql_core_src_dir }}/Makefile"
+
+    - name: Compile Nagios Core
+      ansible.builtin.command:
+        cmd: make all
+        chdir: "{{ nagiosql_core_src_dir }}"
+        creates: "{{ nagiosql_core_src_dir }}/base/nagios"
+
+    - name: Install the Nagios Core binaries, config, headers and web assets
+      ansible.builtin.command:
+        cmd: "make {{ item }}"
+        chdir: "{{ nagiosql_core_src_dir }}"
+      loop:
+        - install
+        - install-daemoninit
+        - install-commandmode
+        - install-config
+        - install-devel
+        - install-webconf
+      changed_when: true
+      notify:
+        - Restart apache
+        - Restart nagios
+
+    - name: Record the installed Nagios Core version {{ nagiosql_core_version }}
+      ansible.builtin.file:
+        path: "{{ nagiosql_prefix }}/.ansible-nagios-core-{{ nagiosql_core_version }}"
+        state: touch
+        owner: root
+        group: root
+        mode: "0644"
+        modification_time: preserve
+        access_time: preserve
+
+- name: Find the stamp files belonging to older Nagios Core builds
+  ansible.builtin.find:
+    paths: "{{ nagiosql_prefix }}"
+    patterns: ".ansible-nagios-core-*"
+    hidden: true
+    excludes: ".ansible-nagios-core-{{ nagiosql_core_version }}"
+  register: nagiosql_core_old_stamps
+
+- name: Remove the stamp files belonging to older Nagios Core builds
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ nagiosql_core_old_stamps.files }}"
+  loop_control:
+    label: "{{ item.path }}"

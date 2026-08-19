@@ -1,0 +1,69 @@
+---
+- name: Install MariaDB
+  ansible.builtin.package:
+    name: "{{ nagiosql_mariadb_packages }}"
+    state: present
+  tags:
+    - nagiosql_packages
+
+- name: Ensure MariaDB is running and enabled
+  ansible.builtin.systemd_service:
+    name: "{{ nagiosql_mariadb_service }}"
+    state: "{{ nagiosql_mariadb_state }}"
+    enabled: "{{ nagiosql_mariadb_enabled }}"
+
+- name: Allow httpd to talk to the database under SELinux
+  ansible.posix.seboolean:
+    name: httpd_can_network_connect_db
+    state: true
+    persistent: true
+  when: nagiosql_selinux_active | bool
+
+- name: Configure the MariaDB root account
+  when: nagiosql_mariadb_manage_root_password | bool
+  block:
+    - name: Set the password on the MariaDB root account
+      ansible.mysql.mysql_user:
+        name: "{{ nagiosql_mariadb_root_username }}"
+        host: "{{ item }}"
+        password: "{{ nagiosql_mariadb_root_password }}"
+        check_implicit_admin: true
+        login_unix_socket: "{{ nagiosql_mariadb_socket }}"
+        login_user: "{{ nagiosql_mariadb_root_username }}"
+        login_password: "{{ nagiosql_mariadb_root_password }}"
+        state: present
+      loop:
+        - localhost
+        - 127.0.0.1
+        - ::1
+      no_log: true
+
+    - name: Write the root client credentials to ~/.my.cnf
+      ansible.builtin.template:
+        src: root-my.cnf.j2
+        dest: "{{ nagiosql_mariadb_root_home }}/.my.cnf"
+        owner: root
+        group: root
+        mode: "0600"
+
+- name: Create the NagiosQL database
+  ansible.mysql.mysql_db:
+    name: "{{ nagiosql_db_name }}"
+    encoding: "{{ nagiosql_db_encoding }}"
+    collation: "{{ nagiosql_db_collation }}"
+    state: present
+    login_unix_socket: "{{ nagiosql_mariadb_socket }}"
+    login_user: "{{ nagiosql_mariadb_root_username }}"
+    login_password: "{{ nagiosql_mariadb_root_password if nagiosql_mariadb_manage_root_password else omit }}"
+
+- name: Create the NagiosQL database user
+  ansible.mysql.mysql_user:
+    name: "{{ nagiosql_db_user }}"
+    host: "{{ nagiosql_db_host }}"
+    password: "{{ nagiosql_db_password }}"
+    priv: "{{ nagiosql_db_name }}.*:ALL"
+    state: present
+    login_unix_socket: "{{ nagiosql_mariadb_socket }}"
+    login_user: "{{ nagiosql_mariadb_root_username }}"
+    login_password: "{{ nagiosql_mariadb_root_password if nagiosql_mariadb_manage_root_password else omit }}"
+  no_log: true

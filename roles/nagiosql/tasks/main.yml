@@ -1,0 +1,18 @@
+---
+- name: Install the NagiosQL web front-end
+  ansible.builtin.include_tasks: install.yml
+
+- name: Create the NagiosQL object configuration tree
+  ansible.builtin.include_tasks: directories.yml
+
+- name: Render the NagiosQL configuration files
+  ansible.builtin.include_tasks: configure.yml
+
+- name: Bootstrap the NagiosQL database schema
+  ansible.builtin.include_tasks: database.yml
+
+- name: Apply the SELinux policy for NagiosQL
+  ansible.builtin.include_tasks: selinux.yml
+  when: nagiosql_selinux_active | bool
+  tags:
+    - nagiosql_selinux

@@ -1,0 +1,21 @@
+---
+# MK Livestatus is an optional NEB broker module. It is a 2019-era C++ code base
+# that does not compile cleanly with GCC 12+ (Debian 12/13, Ubuntu 24.04,
+# EL 9/10), so it is OFF by default. Enable it only where you know it builds.
+# `nagiosql_livestatus_enabled`, `_socket` and `_module` live in the `common`
+# role because the `nagiosql` role wires the broker module into nagios.cfg.
+
+nagiosql_livestatus_version: "1.5.0p25"
+nagiosql_livestatus_archive: "mk-livestatus-{{ nagiosql_livestatus_version }}.tar.gz"
+nagiosql_livestatus_url: >-
+  https://download.checkmk.com/checkmk/{{ nagiosql_livestatus_version }}/mk-livestatus-{{ nagiosql_livestatus_version }}.tar.gz
+nagiosql_livestatus_checksum: ""
+nagiosql_livestatus_src_dir: "{{ nagiosql_build_dir }}/mk-livestatus-{{ nagiosql_livestatus_version }}"
+
+# Relax the C++ standard so the sources build with modern compilers.
+nagiosql_livestatus_cxxflags: "-std=gnu++14 -fpermissive -w"
+
+# Expose Livestatus over TCP using systemd socket activation. xinetd, which the
+# upstream project uses, has been dropped by several of the supported distros.
+nagiosql_livestatus_tcp_enabled: false
+nagiosql_livestatus_tcp_port: 6557

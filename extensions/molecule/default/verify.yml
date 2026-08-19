@@ -1,0 +1,64 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    nagiosql_web_password: "molecule-web-secret"
+  tasks:
+    - name: Collect the state of the services that must be running
+      ansible.builtin.service_facts:
+
+    - name: Assert that Nagios Core, Apache and MariaDB are running
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services[item + '.service'].state == 'running'
+        fail_msg: "{{ item }} is not running"
+      loop:
+        - nagios
+        - "{{ 'httpd' if ansible_facts.os_family == 'RedHat' else 'apache2' }}"
+        - mariadb
+
+    - name: Assert that the Nagios binary and a plugin were installed
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: nagiosql_verify_files
+      failed_when: not nagiosql_verify_files.stat.exists
+      loop:
+        - /usr/local/nagios/bin/nagios
+        - /usr/local/nagios/libexec/check_ping
+        - /usr/local/nagios/etc/nagios.cfg
+        - /var/www/html/webadmin/index.php
+
+    - name: Validate the generated Nagios configuration
+      ansible.builtin.command:
+        cmd: /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+      changed_when: false
+
+    - name: Fetch the Nagios Core web interface
+      ansible.builtin.uri:
+        url: http://localhost/nagios/
+        user: nagiosadmin
+        password: "{{ nagiosql_web_password }}"
+        force_basic_auth: true
+        return_content: true
+      register: nagiosql_verify_core
+      failed_when: "'Nagios' not in nagiosql_verify_core.content"
+
+    - name: Fetch the NagiosQL web interface
+      ansible.builtin.uri:
+        url: http://localhost/webadmin/
+        return_content: true
+        status_code: [200, 302]
+      register: nagiosql_verify_ui
+      failed_when: nagiosql_verify_ui.status not in [200, 302]
+
+    - name: Assert that the NagiosQL schema was imported
+      ansible.mysql.mysql_query:
+        login_db: db_nagiosql_v350
+        query: "SHOW TABLES LIKE 'tbl_configtarget'"
+        login_unix_socket: "{{ '/var/lib/mysql/mysql.sock' if ansible_facts.os_family == 'RedHat' else '/run/mysqld/mysqld.sock' }}"
+        login_user: root
+      register: nagiosql_verify_schema
+      changed_when: false
+      failed_when: nagiosql_verify_schema.rowcount[0] | int != 1

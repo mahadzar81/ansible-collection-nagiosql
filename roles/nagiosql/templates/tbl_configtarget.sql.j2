@@ -1,0 +1,62 @@
+-- {{ ansible_managed }}
+SET NAMES utf8mb4;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO';
+
+DROP TABLE IF EXISTS `tbl_configtarget`;
+CREATE TABLE `tbl_configtarget` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `target` varchar(255) NOT NULL,
+  `alias` varchar(255) NOT NULL,
+  `server` varchar(255) NOT NULL,
+  `port` int(10) unsigned NOT NULL DEFAULT 22,
+  `method` varchar(255) NOT NULL,
+  `user` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `ssh_key_path` varchar(255) NOT NULL,
+  `ftp_secure` tinyint(3) unsigned NOT NULL DEFAULT 0,
+  `basedir` varchar(255) NOT NULL,
+  `hostconfig` varchar(255) NOT NULL,
+  `serviceconfig` varchar(255) NOT NULL,
+  `backupdir` varchar(255) NOT NULL,
+  `hostbackup` varchar(255) NOT NULL,
+  `servicebackup` varchar(255) NOT NULL,
+  `nagiosbasedir` varchar(255) NOT NULL,
+  `importdir` varchar(255) NOT NULL,
+  `picturedir` varchar(255) NOT NULL,
+  `commandfile` varchar(255) NOT NULL,
+  `binaryfile` varchar(255) NOT NULL,
+  `pidfile` varchar(255) NOT NULL,
+  `conffile` varchar(255) NOT NULL,
+  `cgifile` varchar(255) NOT NULL,
+  `resourcefile` varchar(255) NOT NULL,
+  `version` tinyint(3) unsigned NOT NULL DEFAULT 3,
+  `access_group` int(10) unsigned NOT NULL DEFAULT 0,
+  `active` enum('0','1') NOT NULL DEFAULT '1',
+  `nodelete` enum('0','1') NOT NULL DEFAULT '0',
+  `last_modified` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `target` (`target`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
+
+LOCK TABLES `tbl_configtarget` WRITE;
+INSERT INTO `tbl_configtarget` VALUES
+  (1, 'localhost', 'Local installation', 'localhost', 22, '1', '', '', '', 0,
+   '{{ nagiosql_object_dir }}/',
+   '{{ nagiosql_object_dir }}/hosts/',
+   '{{ nagiosql_object_dir }}/services/',
+   '{{ nagiosql_object_dir }}/backup/',
+   '{{ nagiosql_object_dir }}/backup/hosts/',
+   '{{ nagiosql_object_dir }}/backup/services/',
+   '{{ nagiosql_prefix }}/',
+   '{{ nagiosql_object_dir }}/etc/objects/',
+   '',
+   '{{ nagiosql_var_dir }}/rw/nagios.cmd',
+   '{{ nagiosql_prefix }}/bin/nagios',
+   '/run/nagios.lock',
+   '{{ nagiosql_etc_dir }}/nagios.cfg',
+   '{{ nagiosql_etc_dir }}/cgi.cfg',
+   '{{ nagiosql_etc_dir }}/resource.cfg',
+   3, 0, '1', '1', '1970-01-01 00:00:00');
+UNLOCK TABLES;
+
+SET SQL_MODE=@OLD_SQL_MODE;
