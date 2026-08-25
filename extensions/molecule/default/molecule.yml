@@ -23,8 +23,11 @@ provisioner:
   name: ansible
   config_options:
     defaults:
-      callbacks_enabled: profile_tasks
-      stdout_callback: yaml
+      # community.general.yaml was removed in community.general 12.0.0. The
+      # supported equivalent is the core default callback in YAML mode.
+      stdout_callback: ansible.builtin.default
+      result_format: yaml
+      callbacks_enabled: ansible.posix.profile_tasks
   inventory:
     group_vars:
       all:

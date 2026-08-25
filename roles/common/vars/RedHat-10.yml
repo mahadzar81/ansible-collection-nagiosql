@@ -1,0 +1,3 @@
+---
+# EL 10 ships dnf5, where config-manager comes from a differently named package.
+__nagiosql_dnf_plugins_package: dnf5-plugins

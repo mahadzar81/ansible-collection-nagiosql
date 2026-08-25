@@ -32,7 +32,7 @@ Anything outside this list fails fast with an explicit message from the
   - `ansible.posix` >= 1.5.0
   - `ansible.mysql` >= 1.0.0 (`community.mysql` was renamed; the old FQCNs still
     redirect but are deprecated)
-  - `community.general` >= 8.2.0
+  - `community.general` >= 8.0.0
 - Outbound HTTPS from the managed host to `assets.nagios.com`,
   `nagios-plugins.org` and `sourceforge.net`.
 
@@ -176,6 +176,7 @@ fails the run instead of the service.
 | `nagiosql_manage_epel` | `true` | Installs `epel-release` on the EL family. |
 | `nagiosql_manage_crb` | `true` | Enables CodeReady Builder / PowerTools. |
 | `nagiosql_crb_repo` | `crb`, or `powertools` on EL 8 | Override on RHEL proper, where the repo id is `codeready-builder-for-rhel-<ver>-<arch>-rpms`. |
+| `nagiosql_dnf_plugins_package` | `dnf-plugins-core`, or `dnf5-plugins` on EL 10 | Package providing `dnf config-manager`. |
 
 ## SELinux behaviour
 

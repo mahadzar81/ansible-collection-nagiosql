@@ -21,7 +21,7 @@ tags:
   - linux
 dependencies:
   ansible.posix: ">=1.5.0"
-  community.general: ">=8.2.0"
+  community.general: ">=8.0.0"
   ansible.mysql: ">=1.0.0"
 repository: https://github.com/mahadzar81/ansible-collection-nagiosql
 documentation: https://github.com/mahadzar81/ansible-collection-nagiosql/blob/main/README.md
