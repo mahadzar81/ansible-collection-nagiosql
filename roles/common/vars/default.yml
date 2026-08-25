@@ -67,3 +67,4 @@ __nagiosql_selinux_packages: []
 
 # Not applicable on the Debian family, but the variable must resolve.
 __nagiosql_crb_repo: ""
+__nagiosql_dnf_plugins_package: ""

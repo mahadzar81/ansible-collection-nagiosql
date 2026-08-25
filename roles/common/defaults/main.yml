@@ -76,6 +76,7 @@ nagiosql_manage_epel: true
 # Nagios plugins on EL.
 nagiosql_manage_crb: true
 nagiosql_crb_repo: "{{ __nagiosql_crb_repo }}"
+nagiosql_dnf_plugins_package: "{{ __nagiosql_dnf_plugins_package }}"
 
 # --- MK Livestatus (optional) -------------------------------------------------
 nagiosql_livestatus_enabled: false

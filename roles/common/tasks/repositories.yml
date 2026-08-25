@@ -6,8 +6,10 @@
   changed_when: false
   when: ansible_facts.os_family == 'Debian'
 
+# `ansible.builtin.package` is used rather than `ansible.builtin.dnf` because
+# EL 10 ships dnf5, whose Python bindings the dnf4 module cannot import.
 - name: Install the EPEL release package
-  ansible.builtin.dnf:
+  ansible.builtin.package:
     name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_facts.distribution_major_version }}.noarch.rpm"
     state: present
     disable_gpg_check: true
@@ -16,10 +18,37 @@
     - nagiosql_manage_epel | bool
 
 - name: Enable the CodeReady Builder repository
-  community.general.dnf_config_manager:
-    name: "{{ nagiosql_crb_repo }}"
-    state: enabled
   when:
     - ansible_facts.os_family == 'RedHat'
     - nagiosql_manage_crb | bool
     - nagiosql_crb_repo | length > 0
+  block:
+    - name: Install the dnf config-manager plugin
+      ansible.builtin.package:
+        name: "{{ nagiosql_dnf_plugins_package }}"
+        state: present
+
+    - name: Gather the list of enabled repositories
+      ansible.builtin.command:
+        cmd: dnf repolist --enabled
+      changed_when: false
+      register: nagiosql_enabled_repos
+
+    # community.general.dnf_config_manager is deliberately avoided here: its
+    # dnf5 support is unreleased as of community.general 13.4.0, so it still
+    # emits the dnf4 `--set-enabled` syntax and fails on EL 10.
+    - name: Enable the CodeReady Builder repository using dnf5
+      ansible.builtin.command:
+        cmd: "dnf config-manager setopt {{ nagiosql_crb_repo }}.enabled=1"
+      when:
+        - ansible_facts.distribution_major_version | int >= 10
+        - nagiosql_enabled_repos.stdout | default('') is not search('(?m)^' ~ nagiosql_crb_repo ~ '\s')
+      changed_when: true
+
+    - name: Enable the CodeReady Builder repository using dnf4
+      ansible.builtin.command:
+        cmd: "dnf config-manager --assumeyes --set-enabled {{ nagiosql_crb_repo }}"
+      when:
+        - ansible_facts.distribution_major_version | int < 10
+        - nagiosql_enabled_repos.stdout | default('') is not search('(?m)^' ~ nagiosql_crb_repo ~ '\s')
+      changed_when: true
