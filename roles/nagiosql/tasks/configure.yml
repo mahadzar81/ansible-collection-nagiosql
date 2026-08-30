@@ -8,6 +8,11 @@
     mode: "0640"
   no_log: true
 
+# `validate:` cannot be used here. Nagios drops privileges to the nagios user
+# after it parses the main config file and before it reads the object config,
+# so it cannot re-open a temporary file living under root's 0700 tmp directory.
+# The file is written in place instead, then checked, and rolled back on
+# failure so an invalid configuration is never left behind.
 - name: Render the Nagios Core main configuration file
   ansible.builtin.template:
     src: nagios.cfg.j2
@@ -15,10 +20,43 @@
     owner: "{{ nagiosql_user }}"
     group: "{{ nagiosql_apache_group }}"
     mode: "0664"
-    validate: "{{ (nagiosql_prefix + '/bin/nagios -v %s') if nagiosql_validate_nagios_cfg else omit }}"
+    backup: "{{ nagiosql_validate_nagios_cfg | bool }}"
+  register: nagiosql_nagios_cfg
   when: nagiosql_manage_nagios_cfg | bool
   notify:
     - Restart nagios
+
+- name: Verify the generated Nagios Core configuration
+  when:
+    - nagiosql_manage_nagios_cfg | bool
+    - nagiosql_validate_nagios_cfg | bool
+  block:
+    - name: Run the Nagios Core pre-flight check
+      ansible.builtin.command:
+        cmd: "{{ nagiosql_prefix }}/bin/nagios -v {{ nagiosql_etc_dir }}/nagios.cfg"
+      changed_when: false
+
+  rescue:
+    - name: Roll back to the previous nagios.cfg
+      ansible.builtin.copy:
+        src: "{{ nagiosql_nagios_cfg.backup_file }}"
+        dest: "{{ nagiosql_etc_dir }}/nagios.cfg"
+        remote_src: true
+        owner: "{{ nagiosql_user }}"
+        group: "{{ nagiosql_apache_group }}"
+        mode: "0664"
+      when: nagiosql_nagios_cfg.backup_file is defined
+
+    - name: Report that the generated Nagios configuration is invalid
+      ansible.builtin.fail:
+        msg: >-
+          {{ nagiosql_prefix }}/bin/nagios -v rejected the generated
+          {{ nagiosql_etc_dir }}/nagios.cfg.
+          {{ 'The previous file has been restored.'
+             if nagiosql_nagios_cfg.backup_file is defined
+             else 'No previous file existed, so the invalid one is still in place.' }}
+          Review nagiosql_cfg_files, nagiosql_cfg_dirs and
+          nagiosql_broker_modules, then re-run with -vvv to see the full output.
 
 - name: Render the NagiosQL bootstrap SQL
   ansible.builtin.template:

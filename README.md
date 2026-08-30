@@ -151,14 +151,20 @@ leave empty to skip verification).
 ### `nagios.cfg` generation
 
 The `nagiosql` role owns `nagios.cfg` and renders it from
-`nagiosql_cfg_files`, `nagiosql_cfg_dirs` and `nagiosql_broker_modules`. The
-result is validated with `nagios -v` before it is written, so a bad template
-fails the run instead of the service.
+`nagiosql_cfg_files`, `nagiosql_cfg_dirs` and `nagiosql_broker_modules`.
+
+The file is written in place, then checked with `nagios -v`. If the check
+fails, the previous `nagios.cfg` is restored from a backup and the run fails,
+so a bad template never reaches a running service. Ansible's `validate:`
+parameter cannot be used here: `nagios -v` drops privileges to the `nagios`
+user after parsing the main config file and before reading the object config,
+which leaves it unable to re-open a temporary file under root's `0700` tmp
+directory.
 
 | Variable | Default | Description |
 | --- | --- | --- |
 | `nagiosql_manage_nagios_cfg` | `true` | Set `false` to leave `nagios.cfg` alone entirely. |
-| `nagiosql_validate_nagios_cfg` | `true` | Set `false` to skip the `nagios -v` pre-flight check. |
+| `nagiosql_validate_nagios_cfg` | `true` | Set `false` to skip the `nagios -v` pre-flight check and its rollback. |
 | `nagiosql_broker_modules` | Livestatus when enabled, else `[]` | Event broker modules. |
 | `nagiosql_process_performance_data` | `false` | Enables the perfdata file directives. |
 

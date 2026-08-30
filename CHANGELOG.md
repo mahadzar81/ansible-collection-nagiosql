@@ -35,8 +35,8 @@ variable names and the supported platform list have all changed.
 - MariaDB authentication defaults to local socket auth for `root` rather than
   rewriting the root password on every run.
 - `nagios.cfg` is generated from a template driven by `nagiosql_cfg_files`,
-  `nagiosql_cfg_dirs` and `nagiosql_broker_modules`, and is validated with
-  `nagios -v` before it is written.
+  `nagiosql_cfg_dirs` and `nagiosql_broker_modules`, then checked with
+  `nagios -v` and rolled back from a backup if the check fails.
 - Source builds are guarded by version stamp files, so re-runs are no-ops and
   version bumps trigger a rebuild.
 - `community.mysql` FQCNs were migrated to `ansible.mysql`.
