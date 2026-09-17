@@ -45,13 +45,49 @@
       register: nagiosql_verify_core
       failed_when: "'Nagios' not in nagiosql_verify_core.content"
 
+    # Fetched without failing so the web server log can be surfaced first. A
+    # PHP fatal error returns an empty 500 body, which on its own says nothing
+    # about the cause.
     - name: Fetch the NagiosQL web interface
       ansible.builtin.uri:
         url: http://localhost/webadmin/
         return_content: true
-        status_code: [200, 302]
+        status_code: [200, 302, 500]
       register: nagiosql_verify_ui
-      failed_when: nagiosql_verify_ui.status not in [200, 302]
+
+    - name: Report the PHP configuration in use
+      ansible.builtin.command:
+        cmd: php --version
+      changed_when: false
+      register: nagiosql_verify_php
+      when: nagiosql_verify_ui.status != 200
+
+    - name: Read the tail of the web server error log
+      ansible.builtin.command:
+        cmd: "tail -n 60 {{ __nagiosql_error_log }}"
+      vars:
+        __nagiosql_error_log: >-
+          {{ '/var/log/httpd/error_log'
+             if ansible_facts.os_family == 'RedHat'
+             else '/var/log/apache2/error.log' }}
+      changed_when: false
+      register: nagiosql_verify_log
+      when: nagiosql_verify_ui.status != 200
+
+    - name: Show why the NagiosQL web interface failed
+      ansible.builtin.debug:
+        msg: >-
+          {{ [nagiosql_verify_php.stdout | default('php --version unavailable')]
+             + (nagiosql_verify_log.stdout_lines | default(['error log unavailable'])) }}
+      when: nagiosql_verify_ui.status != 200
+
+    - name: Assert that the NagiosQL web interface responds
+      ansible.builtin.assert:
+        that:
+          - nagiosql_verify_ui.status in [200, 302]
+        fail_msg: >-
+          NagiosQL returned HTTP {{ nagiosql_verify_ui.status }}. See the error
+          log output in the preceding task for the underlying cause.
 
     - name: Assert that the NagiosQL schema was imported
       ansible.mysql.mysql_query:
