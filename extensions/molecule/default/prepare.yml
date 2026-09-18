@@ -1,7 +1,11 @@
 ---
 - name: Prepare
   hosts: all
-  become: true
+  # No become: the test containers already run as root, and sudo is broken in
+  # the Rocky Linux base images on docker-ce and GitHub Actions runners.
+  # See rocky-linux/sig-cloud-instance-images#56, still open upstream. The
+  # user-facing playbook in playbooks/ keeps become: true.
+  become: false
   gather_facts: true
   tasks:
     - name: Refresh the apt cache

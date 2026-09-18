@@ -34,6 +34,8 @@ provisioner:
   inventory:
     group_vars:
       all:
+        # See the note in converge.yml: sudo is broken in the Rocky images.
+        ansible_become: false
         nagiosql_db_password: "molecule-db-secret"
         nagiosql_admin_password: "molecule-admin-secret"
         nagiosql_web_users:
