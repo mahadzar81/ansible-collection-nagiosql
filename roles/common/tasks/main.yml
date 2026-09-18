@@ -1,16 +1,35 @@
 ---
-- name: Load the variables for this operating system
-  ansible.builtin.include_vars: "{{ lookup('ansible.builtin.first_found', __nagiosql_vars_params) }}"
+# Loaded in two passes on purpose. first_found returns a single file, so a
+# version specific file cannot simply be listed ahead of the family file: it
+# would replace it rather than extend it, leaving the family's variables
+# undefined. The family file therefore provides the complete set, and the
+# version file overrides only the handful of keys that differ.
+- name: Load the base variables for this operating system
+  ansible.builtin.include_vars: "{{ lookup('ansible.builtin.first_found', __nagiosql_base_vars) }}"
   vars:
-    __nagiosql_vars_params:
+    __nagiosql_base_vars:
       files:
-        - "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml"
         - "{{ ansible_facts.distribution }}.yml"
-        - "{{ ansible_facts.os_family }}-{{ ansible_facts.distribution_major_version }}.yml"
         - "{{ ansible_facts.os_family }}.yml"
         - default.yml
       paths:
         - "{{ role_path }}/vars"
+  tags:
+    - always
+
+- name: Apply the version specific variable overrides
+  ansible.builtin.include_vars: "{{ __nagiosql_override_file }}"
+  loop: "{{ query('ansible.builtin.first_found', __nagiosql_override_vars) }}"
+  loop_control:
+    loop_var: __nagiosql_override_file
+  vars:
+    __nagiosql_override_vars:
+      files:
+        - "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml"
+        - "{{ ansible_facts.os_family }}-{{ ansible_facts.distribution_major_version }}.yml"
+      paths:
+        - "{{ role_path }}/vars"
+      skip: true
   tags:
     - always
 

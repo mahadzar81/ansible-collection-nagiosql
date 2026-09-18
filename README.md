@@ -23,16 +23,27 @@ This collection replaces the standalone `mahadzar81.nagiosql` role. See
 Anything outside this list fails fast with an explicit message from the
 `common` role rather than part-way through a source build.
 
+> **RHEL 8 needs ansible-core 2.16 on the controller.** RHEL 8 ships Python 3.6
+> as `/usr/bin/python3`, and its `dnf` bindings exist only for that
+> interpreter, so a newer Python cannot be substituted. ansible-core 2.17
+> dropped support for Python 3.6 on managed nodes, which makes 2.16 the last
+> release able to manage a stock RHEL 8 host. This is an ansible-core and
+> RHEL 8 constraint, not a limitation of this collection. RHEL 9 (Python 3.9),
+> RHEL 10 (3.12), Debian 11+ and Ubuntu 22.04+ work with any supported
+> ansible-core.
+
 ## Requirements
 
-- `ansible-core` 2.16 or newer on the controller.
+- `ansible-core` 2.16 or newer on the controller, and exactly 2.16 if you are
+  managing RHEL 8 hosts (see the note above).
 - `become: true` — the collection installs packages, builds software into
   `/usr/local` and manages systemd units.
 - Collection dependencies, installed with `ansible-galaxy collection install -r requirements.yml`:
   - `ansible.posix` >= 1.5.0
   - `ansible.mysql` >= 1.0.0 (`community.mysql` was renamed; the old FQCNs still
     redirect but are deprecated)
-  - `community.general` >= 8.0.0
+  - `community.general` >= 8.0.0, and < 12.0.0 on ansible-core 2.16, since
+    12.0.0 raised its floor to 2.17
 - Outbound HTTPS from the managed host to `assets.nagios.com`,
   `nagios-plugins.org` and `sourceforge.net`.
 
