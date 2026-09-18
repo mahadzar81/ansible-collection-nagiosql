@@ -22,6 +22,7 @@ __nagiosql_php_packages:
   - php-gd
   - php-mbstring
   - php-mysql
+  - php-pear
   - php-xml
 
 __nagiosql_build_packages:
