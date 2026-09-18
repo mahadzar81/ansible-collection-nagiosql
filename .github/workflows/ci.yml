@@ -109,14 +109,34 @@ jobs:
         with:
           python-version: "3.12"
 
+      # EL 8 ships Python 3.6 as /usr/bin/python3, and its dnf bindings exist
+      # only for that interpreter, so a newer Python cannot be substituted.
+      # ansible-core 2.17+ emits modules using `from __future__ import
+      # annotations`, which needs Python 3.7+, so EL 8 managed nodes require
+      # ansible-core 2.16 -- the last release that can target Python 3.6.
       - name: Install the test tooling
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
-          python -m pip install 'ansible-core>=2.16' 'molecule>=6.0' 'molecule-plugins[docker]' docker
+          if [ "${{ matrix.distro }}" = "rockylinux8" ]; then
+            ANSIBLE_CORE='ansible-core>=2.16,<2.17'
+          else
+            ANSIBLE_CORE='ansible-core>=2.18'
+          fi
+          python -m pip install "${ANSIBLE_CORE}" \
+            'molecule>=6.0' 'molecule-plugins[docker]' docker
 
       - name: Install the collection dependencies
         working-directory: ${{ env.COLLECTION_PATH }}
-        run: ansible-galaxy collection install -r requirements.yml
+        run: |
+          set -euo pipefail
+          if [ "${{ matrix.distro }}" = "rockylinux8" ]; then
+            # community.general 12.0.0 raised its floor to ansible-core 2.17.
+            ansible-galaxy collection install \
+              'community.general:>=8.0.0,<12.0.0' ansible.posix ansible.mysql
+          else
+            ansible-galaxy collection install -r requirements.yml
+          fi
 
       # MariaDB will not start inside a container while the host AppArmor
       # profile is loaded. See geerlingguy/ansible-role-mysql#422.
