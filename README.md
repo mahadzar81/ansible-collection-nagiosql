@@ -36,6 +36,12 @@ Anything outside this list fails fast with an explicit message from the
 - Outbound HTTPS from the managed host to `assets.nagios.com`,
   `nagios-plugins.org` and `sourceforge.net`.
 
+NagiosQL needs the PHP `mysqli`, `gettext`, `mbstring`, `xml`, `session` and
+`ftp` extensions, plus PEAR. The first five come from `php-common` on both
+families; PEAR is installed explicitly as `php-pear`, because NagiosQL bundles
+`HTML/Template/IT.php` but not the `PEAR.php` base class it requires. All of
+this is handled by `nagiosql_php_packages`.
+
 ## Installation
 
 ```bash
@@ -265,6 +271,13 @@ The scenario runs `dependency → destroy → syntax → create → prepare → 
 MariaDB are running, that the built binaries and plugins exist, that
 `nagios -v` accepts the generated configuration, that both web interfaces
 respond, and that the NagiosQL schema was imported.
+
+The Molecule plays run with `become: false`, because the test containers
+already run as root and `sudo` is broken in the Rocky Linux base images on
+docker-ce and GitHub Actions runners
+([sig-cloud-instance-images#56](https://github.com/rocky-linux/sig-cloud-instance-images/issues/56),
+open upstream). This affects the test harness only; the collection itself is
+written to run under `become: true`, as `playbooks/nagiosql.yml` does.
 
 **SELinux cannot be tested in Docker.** Containers share the host's SELinux
 state, so the CI matrix exercises the "SELinux disabled" path on Rocky. Verify

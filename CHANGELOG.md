@@ -50,6 +50,10 @@ variable names and the supported platform list have all changed.
 
 ### Fixed
 
+- Install `php-pear`. NagiosQL ships `libraries/pear/HTML/Template/IT.php` but
+  not the `PEAR.php` base class it requires, so the web interface returned a
+  bare HTTP 500 on every platform without it.
+
 - The `state: latest` package installs that made every run report changes.
 - The backup-before-upgrade tasks that read from the controller rather than the
   managed host.
