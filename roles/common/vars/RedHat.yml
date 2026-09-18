@@ -19,6 +19,8 @@ __nagiosql_php_packages:
   - php-gd
   - php-mbstring
   - php-mysqlnd
+  # NagiosQL bundles HTML/Template/IT.php but not PEAR.php, which it requires.
+  - php-pear
   - php-xml
 
 __nagiosql_build_packages:
