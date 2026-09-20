@@ -35,6 +35,22 @@
     group: "{{ nagiosql_apache_group }}"
     mode: "0664"
 
+# Nagios drops privileges to nagiosql_user before it reads the object config,
+# and that user is not in the Apache group, so it reaches this tree through the
+# world bits. `copy` applies directory_mode only to directories it creates for
+# the source tree, not to the intermediate directories it makes along the
+# destination path, so those can end up without o+x. The symbolic mode below
+# sets 0775 on directories and 0664 on files in one pass: the capital X adds
+# execute to directories only.
+- name: Ensure the NagiosQL object tree is readable by the Nagios process
+  ansible.builtin.file:
+    path: "{{ nagiosql_object_dir }}"
+    state: directory
+    recurse: true
+    owner: "{{ nagiosql_apache_user }}"
+    group: "{{ nagiosql_apache_group }}"
+    mode: "u=rwX,g=rwX,o=rX"
+
 - name: Let the Apache group read and write the Nagios Core configuration
   ansible.builtin.file:
     path: "{{ item }}"
