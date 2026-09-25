@@ -73,4 +73,3 @@ __nagiosql_selinux_packages:
   - python3-policycoreutils
 
 __nagiosql_crb_repo: crb
-__nagiosql_dnf_plugins_package: dnf-plugins-core
