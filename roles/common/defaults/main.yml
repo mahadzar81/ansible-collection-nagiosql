@@ -41,6 +41,15 @@ nagiosql_mariadb_config_file: "{{ __nagiosql_mariadb_config_file }}"
 nagiosql_version: "3.5.0"
 nagiosql_db_version: "{{ nagiosql_version | replace('.', '') }}"
 
+# The bundled NagiosQL schema declares utf8 (utf8mb3) on every table. Matching
+# it matters twice over: utf8mb4 would make a UNIQUE KEY on a varchar(255)
+# need 1020 bytes, over the 1000 byte MyISAM limit on MariaDB 10.3 (EL 8), and
+# a mismatched collation risks "Illegal mix of collations" on joins against the
+# rest of the schema. `utf8` is the portable spelling: the utf8mb3 alias does
+# not exist before MariaDB 10.6.
+nagiosql_db_encoding: utf8
+nagiosql_db_collation: utf8_general_ci
+
 nagiosql_db_name: "db_nagiosql_v{{ nagiosql_db_version }}"
 nagiosql_db_user: nagiosql_user
 # NOTE: override this. Vaulted variables are strongly recommended.

@@ -1,5 +1,5 @@
 -- {{ ansible_managed }}
-SET NAMES utf8mb4;
+SET NAMES {{ nagiosql_db_encoding }};
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO';
 
 DROP TABLE IF EXISTS `tbl_settings`;
@@ -10,7 +10,7 @@ CREATE TABLE `tbl_settings` (
   `value` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=MyISAM AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4;
+) ENGINE=MyISAM AUTO_INCREMENT=21 DEFAULT CHARSET={{ nagiosql_db_encoding }};
 
 LOCK TABLES `tbl_settings` WRITE;
 INSERT INTO `tbl_settings` VALUES

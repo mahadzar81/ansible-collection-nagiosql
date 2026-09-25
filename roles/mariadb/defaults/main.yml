@@ -3,5 +3,5 @@
 # role because the `nagiosql` role needs them too.
 nagiosql_mariadb_state: started
 nagiosql_mariadb_enabled: true
-nagiosql_db_encoding: utf8mb4
-nagiosql_db_collation: utf8mb4_general_ci
+# nagiosql_db_encoding and nagiosql_db_collation live in the `common` role,
+# because the NagiosQL table templates must declare the same charset.
