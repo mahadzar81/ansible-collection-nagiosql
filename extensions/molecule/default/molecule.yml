@@ -13,7 +13,7 @@ platforms:
   - name: "nagiosql-${MOLECULE_DISTRO:-rockylinux9}"
     image: "geerlingguy/docker-${MOLECULE_DISTRO:-rockylinux9}-ansible:latest"
     # Left empty on purpose so each image's own CMD is used. The init path
-    # differs between images: EL uses /usr/sbin/init, while Debian 11 and the
+    # differs between images: EL uses /usr/sbin/init, while some Debian and
     # Ubuntu images use /lib/systemd/systemd.
     command: ${MOLECULE_DOCKER_COMMAND:-""}
     volumes:

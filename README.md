@@ -197,9 +197,8 @@ directory.
 | Variable | Default | Description |
 | --- | --- | --- |
 | `nagiosql_manage_epel` | `true` | Installs `epel-release` on the EL family. |
-| `nagiosql_manage_crb` | `true` | Enables CodeReady Builder / PowerTools. |
+| `nagiosql_manage_crb` | `true` | Enables CodeReady Builder / PowerTools by setting `enabled=1` in its `.repo` file. |
 | `nagiosql_crb_repo` | `crb`, or `powertools` on EL 8 | Override on RHEL proper, where the repo id is `codeready-builder-for-rhel-<ver>-<arch>-rpms`. |
-| `nagiosql_dnf_plugins_package` | `dnf-plugins-core`, or `dnf5-plugins` on EL 10 | Package providing `dnf config-manager`. |
 
 ## SELinux behaviour
 
@@ -275,7 +274,7 @@ MOLECULE_DISTRO=rockylinux9 molecule test
 ```
 
 Valid `MOLECULE_DISTRO` values: `rockylinux8`, `rockylinux9`, `rockylinux10`,
-`debian11`, `debian12`, `debian13`, `ubuntu2204`, `ubuntu2404`.
+`debian12`, `debian13`, `ubuntu2204`, `ubuntu2404`.
 
 The scenario runs `dependency → destroy → syntax → create → prepare → converge
 → idempotence → verify → destroy`. Verification asserts that Nagios, Apache and

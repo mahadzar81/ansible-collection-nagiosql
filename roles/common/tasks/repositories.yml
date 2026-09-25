@@ -17,38 +17,43 @@
     - ansible_facts.os_family == 'RedHat'
     - nagiosql_manage_epel | bool
 
+# The repository file is edited directly rather than through
+# `dnf config-manager`. That sub-command needs a plugin package whose name and
+# syntax differ across the EL generations: `dnf-plugins-core` with
+# `--set-enabled` on dnf4 (EL 8 and 9), and a `setopt` form on dnf5 (EL 10),
+# where the plugin is not packaged for Rocky Linux at all. Setting `enabled=1`
+# in the .repo file is what either command does, and it behaves identically
+# everywhere.
 - name: Enable the CodeReady Builder repository
   when:
     - ansible_facts.os_family == 'RedHat'
     - nagiosql_manage_crb | bool
     - nagiosql_crb_repo | length > 0
   block:
-    - name: Install the dnf config-manager plugin
-      ansible.builtin.package:
-        name: "{{ nagiosql_dnf_plugins_package }}"
-        state: present
+    - name: Locate the repository file defining the CodeReady Builder repository
+      ansible.builtin.find:
+        paths: /etc/yum.repos.d
+        patterns: "*.repo"
+        contains: "^\\[{{ nagiosql_crb_repo }}\\]$"
+      register: nagiosql_crb_repo_file
 
-    - name: Gather the list of enabled repositories
-      ansible.builtin.command:
-        cmd: dnf repolist --enabled
-      changed_when: false
-      register: nagiosql_enabled_repos
+    - name: Fail when the CodeReady Builder repository cannot be found
+      ansible.builtin.fail:
+        msg: >-
+          No file under /etc/yum.repos.d defines a [{{ nagiosql_crb_repo }}]
+          repository. Set nagiosql_crb_repo to the correct id for this system
+          (on RHEL it is codeready-builder-for-rhel-{{ ansible_facts.distribution_major_version }}-<arch>-rpms),
+          or set nagiosql_manage_crb to false if the -devel packages are
+          already reachable.
+      when: nagiosql_crb_repo_file.matched | int == 0
 
-    # community.general.dnf_config_manager is deliberately avoided here: its
-    # dnf5 support is unreleased as of community.general 13.4.0, so it still
-    # emits the dnf4 `--set-enabled` syntax and fails on EL 10.
-    - name: Enable the CodeReady Builder repository using dnf5
-      ansible.builtin.command:
-        cmd: "dnf config-manager setopt {{ nagiosql_crb_repo }}.enabled=1"
-      when:
-        - ansible_facts.distribution_major_version | int >= 10
-        - nagiosql_enabled_repos.stdout | default('') is not search('(?m)^' ~ nagiosql_crb_repo ~ '\s')
-      changed_when: true
-
-    - name: Enable the CodeReady Builder repository using dnf4
-      ansible.builtin.command:
-        cmd: "dnf config-manager --assumeyes --set-enabled {{ nagiosql_crb_repo }}"
-      when:
-        - ansible_facts.distribution_major_version | int < 10
-        - nagiosql_enabled_repos.stdout | default('') is not search('(?m)^' ~ nagiosql_crb_repo ~ '\s')
-      changed_when: true
+    - name: Enable the CodeReady Builder repository
+      community.general.ini_file:
+        path: "{{ nagiosql_crb_repo_file.files[0].path }}"
+        section: "{{ nagiosql_crb_repo }}"
+        option: enabled
+        value: "1"
+        no_extra_spaces: true
+        owner: root
+        group: root
+        mode: "0644"
