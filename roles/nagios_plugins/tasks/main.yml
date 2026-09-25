@@ -42,13 +42,13 @@
           --with-nagios-group={{ nagiosql_group }}
           {{ nagiosql_plugins_configure_extra_args }}
         chdir: "{{ nagiosql_plugins_src_dir }}"
-        creates: "{{ nagiosql_plugins_src_dir }}/Makefile"
+      changed_when: true
 
     - name: Compile the Nagios plugins
       ansible.builtin.command:
         cmd: make
         chdir: "{{ nagiosql_plugins_src_dir }}"
-        creates: "{{ nagiosql_plugins_src_dir }}/plugins/check_ping"
+      changed_when: true
 
     - name: Install the Nagios plugins
       ansible.builtin.command:

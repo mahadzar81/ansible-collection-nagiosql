@@ -37,7 +37,7 @@
       ansible.builtin.command:
         cmd: "./configure --with-nagios4 --prefix={{ nagiosql_prefix }}"
         chdir: "{{ nagiosql_livestatus_src_dir }}"
-        creates: "{{ nagiosql_livestatus_src_dir }}/Makefile"
+      changed_when: true
       environment:
         CXXFLAGS: "{{ nagiosql_livestatus_cxxflags }}"
 
@@ -45,7 +45,7 @@
       ansible.builtin.command:
         cmd: make install
         chdir: "{{ nagiosql_livestatus_src_dir }}"
-        creates: "{{ nagiosql_livestatus_module }}"
+      changed_when: true
       environment:
         CXXFLAGS: "{{ nagiosql_livestatus_cxxflags }}"
 

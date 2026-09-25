@@ -37,13 +37,13 @@
           --prefix={{ nagiosql_prefix }}
           {{ nagiosql_core_configure_extra_args }}
         chdir: "{{ nagiosql_core_src_dir }}"
-        creates: "{{ nagiosql_core_src_dir }}/Makefile"
+      changed_when: true
 
     - name: Compile Nagios Core
       ansible.builtin.command:
         cmd: make all
         chdir: "{{ nagiosql_core_src_dir }}"
-        creates: "{{ nagiosql_core_src_dir }}/base/nagios"
+      changed_when: true
 
     - name: Install the Nagios Core binaries, config, headers and web assets
       ansible.builtin.command:

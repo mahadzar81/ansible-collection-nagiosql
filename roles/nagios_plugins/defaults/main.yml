@@ -5,4 +5,10 @@ nagiosql_plugins_url: >-
   https://nagios-plugins.org/download/nagios-plugins-{{ nagiosql_plugins_version }}.tar.gz
 nagiosql_plugins_checksum: ""
 nagiosql_plugins_src_dir: "{{ nagiosql_build_dir }}/nagios-plugins-{{ nagiosql_plugins_version }}"
-nagiosql_plugins_configure_extra_args: "--with-openssl"
+# Left empty on purpose. configure detects OpenSSL in the standard locations
+# by itself. Passing a bare `--with-openssl` makes autoconf set
+# with_openssl=yes, which configure then interpolates as a path, producing the
+# literal directories `yes/include` and `yes/lib`. Older libtool tolerated the
+# dangling -L; the libtool on EL 10 fails the link outright. Set this to
+# `--with-openssl=/path/to/openssl` only if OpenSSL lives somewhere unusual.
+nagiosql_plugins_configure_extra_args: ""
