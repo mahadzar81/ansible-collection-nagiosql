@@ -48,7 +48,11 @@ __nagiosql_plugin_build_packages:
   - net-snmp-utils
   - openldap-devel
   - openssl-devel
-  - samba-client
+  # samba-client / smbclient is deliberately absent: it is a runtime
+  # dependency of the optional check_smb plugin, not a build dependency,
+  # and its dependency tree is large and occasionally broken in vendor
+  # repositories. Add it through nagiosql_extra_packages if you need
+  # check_smb.
 
 __nagiosql_livestatus_build_packages:
   - boost-devel
