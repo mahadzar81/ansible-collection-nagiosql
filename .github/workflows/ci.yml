@@ -52,6 +52,22 @@ jobs:
         working-directory: ${{ env.COLLECTION_PATH }}
         run: ansible-lint
 
+      # The Galaxy importer rejects a collection whose roles lack a README,
+      # and it only does so after the artifact has been uploaded, which burns
+      # the version number. Catch it here instead.
+      - name: Check that every role has a README
+        working-directory: ${{ env.COLLECTION_PATH }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for role in roles/*/; do
+            if [ ! -f "${role}README.md" ]; then
+              echo "::error file=${role}::${role} has no README.md; the Galaxy import will fail"
+              missing=1
+            fi
+          done
+          [ "${missing}" -eq 0 ] && echo "All roles have a README.md"
+
   build:
     name: Build the collection artifact
     runs-on: ubuntu-latest

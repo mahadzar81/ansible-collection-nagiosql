@@ -1,7 +1,7 @@
 ---
 namespace: mahadzar81
 name: nagiosql
-version: 2.0.1
+version: 2.0.2
 readme: README.md
 authors:
   - Mahadzar <mahadzar81@users.noreply.github.com>

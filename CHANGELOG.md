@@ -50,6 +50,10 @@ variable names and the supported platform list have all changed.
 
 ### Fixed
 
+- Add a `README.md` to each of the seven roles. The Ansible Galaxy importer
+  rejects a collection whose roles have no README, failing the import after the
+  artifact has already been uploaded. CI now checks for them before release.
+
 - Install `php-pear`. NagiosQL ships `libraries/pear/HTML/Template/IT.php` but
   not the `PEAR.php` base class it requires, so the web interface returned a
   bare HTTP 500 on every platform without it.
