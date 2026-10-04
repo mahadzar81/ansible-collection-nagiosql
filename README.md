@@ -154,6 +154,20 @@ are listed here; the full set is in each role's `defaults/main.yml`.
 Each has a matching `_url` and an optional `_checksum` (a bare sha256 digest;
 leave empty to skip verification).
 
+### Optional plugin dependencies
+
+`check_smb` needs the `smbclient` binary at runtime. It is not installed by
+default, because it is not a build dependency and its package pulls in a large
+tree that is occasionally broken in vendor repositories. Add it when you need
+it:
+
+```yaml
+vars:
+  nagiosql_extra_packages:
+    - samba-client   # EL family
+    # - smbclient    # Debian family
+```
+
 ### Layout
 
 | Variable | Default | Description |
